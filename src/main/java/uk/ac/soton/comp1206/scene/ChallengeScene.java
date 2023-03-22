@@ -1,5 +1,8 @@
 package uk.ac.soton.comp1206.scene;
 
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -53,6 +56,19 @@ public class ChallengeScene extends BaseScene {
         board.setOnBlockClick(this::blockClicked);
         board.setOnBlockHoverEnter(this::blockHoverEnter);
         board.setOnBlockHoverExit(this::blockHoverExit);
+
+        root.addEventFilter(MouseEvent.MOUSE_PRESSED, (e) -> {
+            if (e.isSecondaryButtonDown()) {
+                game.rotateCurrentPiece();
+                e.consume();
+            }
+        });
+
+        root.addEventFilter(KeyEvent.KEY_PRESSED, (e) -> {
+            if (e.getCode() == KeyCode.R) {
+                game.rotateCurrentPiece();
+            }
+        });
     }
 
     /**

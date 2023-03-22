@@ -30,6 +30,7 @@ public class Grid {
      * The grid is a 2D arrow with rows and columns of SimpleIntegerProperties.
      */
     private final SimpleIntegerProperty[][] grid;
+    private final int[][] staticGrid;
 
     /**
      * Create a new Grid with the specified number of columns and rows and initialise them
@@ -42,11 +43,13 @@ public class Grid {
 
         //Create the grid itself
         grid = new SimpleIntegerProperty[cols][rows];
+        staticGrid = new int[cols][rows];
 
         //Add a SimpleIntegerProperty to every block in the grid
         for(var y = 0; y < rows; y++) {
             for(var x = 0; x < cols; x++) {
                 grid[x][y] = new SimpleIntegerProperty(0);
+                staticGrid[x][y] = 0;
             }
         }
     }
@@ -69,6 +72,11 @@ public class Grid {
      */
     public void set(int x, int y, int value) {
         grid[x][y].set(value);
+        staticGrid[x][y] = value;
+    }
+
+    public void setTemp(int x, int y, int value) {
+        grid[x][y].set(value);
     }
 
     /**
@@ -80,10 +88,26 @@ public class Grid {
     public int get(int x, int y) {
         try {
             //Get the value held in the property at the x and y index provided
-            return grid[x][y].get();
+            return staticGrid[x][y];
         } catch (ArrayIndexOutOfBoundsException e) {
             //No such index
             return -1;
+        }
+    }
+
+    public boolean inBounds(int x, int y) {
+        return x >= 0 && x < cols && y >= 0 && y < rows;
+    }
+
+    public void resetTempValue(int x, int y) {
+        grid[x][y].set(staticGrid[x][y]);
+    }
+
+    public void resetAllTempValues() {
+        for (var x = 0; x < cols; x++) {
+            for (var y = 0; y < rows; y++) {
+                resetTempValue(x, y);
+            }
         }
     }
 
@@ -121,6 +145,29 @@ public class Grid {
             for (var cy = 0; cy < piece.getBlocks()[0].length; cy++) {
                 if (piece.getBlocks()[cx][cy] != 0) {
                     set(x + cx, y + cy, piece.getValue());
+                }
+            }
+        }
+    }
+
+    public void placeTempPiece(GamePiece piece, int x, int y, boolean valid) {
+        x--;y--; // offset to start from center of piece
+        int value = valid ? piece.getValue() : 16;
+        for (var cx = 0; cx < piece.getBlocks().length; cx++) {
+            for (var cy = 0; cy < piece.getBlocks()[0].length; cy++) {
+                if (piece.getBlocks()[cx][cy] != 0 && inBounds(x + cx, y + cy)) {
+                    setTemp(x + cx, y + cy, value);
+                }
+            }
+        }
+    }
+
+    public void removeTempPiece(GamePiece piece, int x, int y) {
+        x--;y--; // offset to start from center of piece
+        for (var cx = 0; cx < piece.getBlocks().length; cx++) {
+            for (var cy = 0; cy < piece.getBlocks()[0].length; cy++) {
+                if (piece.getBlocks()[cx][cy] != 0 && inBounds(x + cx, y + cy)) {
+                    resetTempValue(x + cx, y + cy);
                 }
             }
         }

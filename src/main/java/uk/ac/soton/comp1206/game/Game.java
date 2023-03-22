@@ -4,6 +4,7 @@ import java.util.Random;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import uk.ac.soton.comp1206.component.GameBlock;
+import uk.ac.soton.comp1206.utils.Vector2Int;
 
 /**
  * The Game class handles the main logic, state and properties of the TetrECS game. Methods to manipulate the game state
@@ -30,6 +31,8 @@ public class Game {
 
     private GamePiece currentPiece;
     private final Random random = new Random();
+
+    private GameBlock hoveredBlock = null;
 
     /**
      * Create a new game with the specified rows and columns. Creates a corresponding grid model.
@@ -66,33 +69,49 @@ public class Game {
      * @param gameBlock the block that was clicked
      */
     public void blockClicked(GameBlock gameBlock) {
+
         //Get the position of this block
         int x = gameBlock.getX();
         int y = gameBlock.getY();
 
-        //Get the new value for this block
-        /*
-        int previousValue = grid.get(x,y);
-        int newValue = previousValue + 1;
-        if (newValue > GamePiece.PIECES) {
-            newValue = 0;
-        }
-
-        //Update the grid with the new value
-        grid.set(x,y,newValue);
-        */
+        //Place the piece
         if (grid.canPlayPiece(currentPiece, x, y)) {
             grid.playPiece(currentPiece, x, y);
             nextPiece();
+            afterPiecePlaced();
+            refreshPreview();
         }
     }
 
     public void onBlockHoverEnter(GameBlock gameBlock) {
-        grid.set(gameBlock.getX(), gameBlock.getY(), 1);
+        hoveredBlock = gameBlock;
+        refreshPreview();
     }
 
     public void onBlockHoverExit(GameBlock gameBlock) {
-        grid.set(gameBlock.getX(), gameBlock.getY(), 0);
+        hoveredBlock = null;
+        refreshPreview();
+    }
+
+    public void rotateCurrentPiece() {
+        currentPiece.rotate();
+        refreshPreview();
+    }
+
+    private void refreshPreview() {
+        grid.resetAllTempValues();
+        if (hoveredBlock != null) {
+            previewPiece(hoveredBlock);
+        }
+    }
+
+    private void previewPiece(GameBlock gameBlock) {
+        boolean valid = grid.canPlayPiece(currentPiece, gameBlock.getX(), gameBlock.getY());
+        grid.placeTempPiece(currentPiece, gameBlock.getX(), gameBlock.getY(), valid);
+    }
+
+    private void afterPiecePlaced() {
+
     }
 
     /**

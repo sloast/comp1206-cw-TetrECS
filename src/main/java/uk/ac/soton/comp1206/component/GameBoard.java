@@ -1,5 +1,6 @@
 package uk.ac.soton.comp1206.component;
 
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import org.apache.logging.log4j.LogManager;
@@ -181,7 +182,7 @@ public class GameBoard extends GridPane {
     private void blockClicked(MouseEvent event, GameBlock block) {
         logger.info("Block clicked: {}", block);
 
-        if(blockClickedListener != null) {
+        if(blockClickedListener != null && event.getButton() == MouseButton.PRIMARY) {
             blockClickedListener.blockClicked(block);
         }
     }

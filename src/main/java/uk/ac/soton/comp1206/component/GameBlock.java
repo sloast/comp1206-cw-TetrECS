@@ -27,7 +27,7 @@ public class GameBlock extends Canvas {
     public static final Color[] COLOURS = {
             Color.TRANSPARENT,
             Color.DEEPPINK,
-            Color.RED,
+            Color.MAGENTA,
             Color.ORANGE,
             Color.YELLOW,
             Color.YELLOWGREEN,
@@ -40,7 +40,8 @@ public class GameBlock extends Canvas {
             Color.AQUAMARINE,
             Color.BLUE,
             Color.MEDIUMPURPLE,
-            Color.PURPLE
+            Color.PURPLE,
+            Color.RED,
     };
 
     private final GameBoard gameBoard;
