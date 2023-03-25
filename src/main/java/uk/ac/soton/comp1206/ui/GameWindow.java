@@ -23,6 +23,8 @@ public class GameWindow {
 
     private static final Logger logger = LogManager.getLogger(GameWindow.class);
 
+    private static final boolean SHOW_SPLASH_SCREEN = false;
+
     private final int width;
     private final int height;
 
@@ -57,8 +59,12 @@ public class GameWindow {
         //Setup communicator
         communicator = new Communicator("ws://ofb-labs.soton.ac.uk:9700");
 
-        //Go to menu
-        startMenu();
+        //Load first scene
+        if (SHOW_SPLASH_SCREEN) {
+            loadScene(new SplashScene(this));
+        } else {
+            startMenu();
+        }
     }
 
     /**
@@ -71,6 +77,7 @@ public class GameWindow {
         Font.loadFont(getClass().getResourceAsStream("/style/Orbitron-Regular.ttf"),32);
         Font.loadFont(getClass().getResourceAsStream("/style/Orbitron-Bold.ttf"),32);
         Font.loadFont(getClass().getResourceAsStream("/style/Orbitron-ExtraBold.ttf"),32);
+        Font.loadFont(getClass().getResourceAsStream("/style/manaspace.ttf"),32);
     }
 
     /**
@@ -84,6 +91,8 @@ public class GameWindow {
      * Display the single player challenge
      */
     public void startChallenge() { loadScene(new ChallengeScene(this)); }
+
+    public void startInstructions() { loadScene(new InstructionsScene(this)); }
 
     /**
      * Setup the default settings for the stage itself (the window), such as the title and minimum width and height.

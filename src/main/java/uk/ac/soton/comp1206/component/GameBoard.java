@@ -180,25 +180,28 @@ public class GameBoard extends GridPane {
      * @param block block clicked on
      */
     private void blockClicked(MouseEvent event, GameBlock block) {
-        logger.info("Block clicked: {}", block);
 
         if(blockClickedListener != null && event.getButton() == MouseButton.PRIMARY) {
+            logger.info("Block clicked: {}, {}", block.getX(), block.getX());
             blockClickedListener.blockClicked(block);
         }
     }
 
     private void blockHoverEntered(MouseEvent event, GameBlock block) {
-        logger.info("Mouse entered: {}", block);
+        //logger.info("Mouse entered: {}", block);
         if(blockHoverEnterListener != null) {
             blockHoverEnterListener.blockEntered(block);
         }
     }
 
     private void blockHoverExited(MouseEvent event, GameBlock block) {
-        logger.info("Mouse exited: {}", block);
+        //logger.info("Mouse exited: {}", block);
         if(blockHoverEnterListener != null) {
             blockHoverExitListener.blockExited(block);
         }
     }
 
+    public Grid getGrid() {
+        return grid;
+    }
 }

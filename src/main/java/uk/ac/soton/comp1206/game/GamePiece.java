@@ -1,5 +1,7 @@
 package uk.ac.soton.comp1206.game;
 
+import java.util.Random;
+
 /**
  * Instances of GamePiece Represents the model of a specific Game Piece with it's block makeup.
  *
@@ -27,6 +29,8 @@ public class GamePiece {
      * The name of this piece
      */
     private final String name;
+
+    private static final Random random = new Random();
 
     /**
      * Create a new GamePiece of the specified piece number
@@ -186,6 +190,10 @@ public class GamePiece {
 
         newPiece.rotate(rotation);
         return newPiece;
+    }
+
+    public static GamePiece createPiece() {
+        return createPiece(random.nextInt(PIECES));
     }
 
     /**

@@ -9,10 +9,12 @@
 .menu-background {
     -fx-background-image: url("../images/1.jpg");
     -fx-background-size: cover;
+    -fx-background-color: black;
 }
 
 .challenge-background {
     -fx-background-image: url("../images/2.jpg");
+    -fx-background-color: black;
     -fx-background-size: cover;
 }
 
@@ -21,26 +23,28 @@
 }
 
 .menuItem {
-    -fx-fill: white;
-    -fx-font-family: 'Orbitron';
+    -fx-text-fill: white;
+    -fx-font-family: 'manaspace';
     -fx-font-size: 32px;
-    -fx-font-weight: 700;
-    -fx-border-color: black;
-    -fx-stroke: black;
+    -fx-background-color: none;
     -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
 }
 
 .menuItem:hover {
-    -fx-fill: yellow;
+    -fx-text-fill: green;
+}
+
+.menuItem:selected {
+    -fx-text-fill: red;
 }
 
 .menuItem.selected {
-    -fx-fill: yellow;
+    -fx-text-fill: blue;
 }
 
 .bigtitle {
     -fx-fill: yellow;
-    -fx-font-family: 'Orbitron';
+    -fx-font-family: 'manaspace';
     -fx-font-size: 64px;
     -fx-font-weight: 900;
     -fx-border-color: black;
@@ -49,18 +53,16 @@
 }
 
 .title {
-    -fx-fill: white;
-    -fx-font-family: 'Orbitron';
+    -fx-text-fill: white;
+    -fx-font-family: 'manaspace';
     -fx-font-size: 32px;
-    -fx-font-weight: 900;
-    -fx-border-color: black;
-    -fx-stroke: black;
+    -fx-underline: true;
     -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
 }
 
 .heading {
     -fx-fill: white;
-    -fx-font-family: 'Orbitron';
+    -fx-font-family: 'manaspace';
     -fx-font-size: 20px;
     -fx-font-weight: 700;
     -fx-border-color: black;
@@ -69,52 +71,65 @@
 }
 
 .score {
-    -fx-fill: yellow;
-    -fx-font-family: 'Orbitron';
+    -fx-text-fill: lime;
+    -fx-font-family: 'manaspace';
     -fx-font-size: 36px;
-    -fx-font-weight: 700;
-    -fx-border-color: black;
-    -fx-stroke: black;
     -fx-text-alignment: center;
-    -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
 }
 
 .level {
-    -fx-fill: #ff6600;
-    -fx-font-family: 'Orbitron';
+    -fx-text-fill: red;
+    -fx-font-family: 'manaspace';
     -fx-font-size: 24px;
-    -fx-font-weight: 700;
-    -fx-border-color: black;
-    -fx-stroke: black;
     -fx-text-alignment: center;
-    -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
+    /*-fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);*/
+}
+
+.regularlabel {
+    -fx-text-fill: white;
+    -fx-font-family: 'manaspace';
+    -fx-font-size: 36px;
+    -fx-text-alignment: center;
+}
+
+.smalllabel{
+    -fx-text-fill: white;
+    -fx-font-family: 'manaspace';
+    -fx-font-size: 24px;
+    -fx-text-alignment: center;
 }
 
 .hiscore {
-    -fx-fill: orange;
-    -fx-font-family: 'Orbitron';
+    -fx-text-fill: orange;
+    -fx-font-family: 'manaspace';
     -fx-font-size: 24px;
     -fx-font-weight: 700;
-    -fx-border-color: black;
-    -fx-stroke: black;
     -fx-text-alignment: center;
     -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
 }
 
 .lives {
-    -fx-fill: yellow;
-    -fx-font-family: 'Orbitron';
+    -fx-text-fill: yellow;
+    -fx-font-family: 'manaspace';
     -fx-font-size: 36px;
     -fx-font-weight: 700;
     -fx-border-color: black;
     -fx-stroke: black;
+    -fx-text-alignment: center;
+    -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
+}
+
+.multiplier {
+    -fx-text-fill: white;
+    -fx-font-family: 'manaspace';
+    -fx-font-size: 36px;
     -fx-text-alignment: center;
     -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
 }
 
 .scorelist {
     -fx-font-size: 20px;
-    -fx-font-family: 'Orbitron';
+    -fx-font-family: 'manaspace';
 }
 
 .scoreitem {
@@ -142,7 +157,7 @@
 
 .channelItem {
     -fx-fill: white;
-    -fx-font-family: 'Orbitron';
+    -fx-font-family: 'manaspace';
     -fx-font-size: 16px;
     -fx-font-weight: 700;
     -fx-border-color: black;
@@ -174,7 +189,7 @@
 .messages {
     -fx-background-color: transparent;
     -fx-font-size: 12px;
-    -fx-font-family: 'Orbitron';
+    -fx-font-family: 'manaspace';
 }
 
 .messages Text {
@@ -191,7 +206,7 @@ TextField {
 
 .playerBox {
     -fx-font-size: 14px;
-    -fx-font-family: 'Orbitron';
+    -fx-font-family: 'manaspace';
 }
 
 .playerBox Text {
@@ -204,6 +219,10 @@ TextField {
 
 .instructions {
     -fx-font-size: 10px;
-    -fx-font-family: 'Orbitron';
+    -fx-font-family: 'manaspace';
     -fx-fill: white;
+}
+
+.titleart {
+    -fx-font-family: monospace;
 }

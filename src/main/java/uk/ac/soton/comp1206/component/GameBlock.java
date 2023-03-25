@@ -3,10 +3,19 @@ package uk.ac.soton.comp1206.component;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.effect.Blend;
+import javafx.scene.effect.BlendMode;
+import javafx.scene.effect.ColorAdjust;
+import javafx.scene.effect.ColorInput;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
 import javafx.scene.paint.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import uk.ac.soton.comp1206.utils.Multimedia;
 
 /**
  * The Visual User Interface component representing a single block in the grid.
@@ -41,6 +50,9 @@ public class GameBlock extends Canvas {
             Color.BLUE,
             Color.MEDIUMPURPLE,
             Color.PURPLE,
+
+            //Color.rgb(255, 0, 0, .5),
+
             Color.RED,
     };
 
@@ -58,6 +70,8 @@ public class GameBlock extends Canvas {
      * The row this block exists as in the grid
      */
     private final int y;
+    private static final int CORNER_RADIUS = 15;
+    private static final Image BASE_IMAGE = Multimedia.getImage("block.png", 160);
 
     /**
      * The value of this block (0 = empty, otherwise specifies the colour to render as)
@@ -105,11 +119,28 @@ public class GameBlock extends Canvas {
      */
     public void paint() {
         //If the block is empty, paint as empty
-        if(value.get() == 0) {
+        var val = value.get();
+        if(val == 0) {
+            //paintEmpty();
             paintEmpty();
+        } else if (val < 0) { // Add red over existing color to show invalid placement
+            var col = COLOURS[-val - 1]; // find the original color of this block
+
+            if (val == -1) {
+                paintColor(Color.rgb(255, 0, 0, 0.7));
+            } else {
+                paintColor(Color.RED.interpolate(col, 0.3));
+            }
+
+
+        } else if (val >= 100) { // preview -> paint semi-transparent
+            var col = COLOURS[val - 100];
+            paintColor(Color.TRANSPARENT.interpolate(col, 0.7));
+
         } else {
             //If the block is not empty, paint with the colour represented by the value
-            paintColor(COLOURS[value.get()]);
+            paintColor(COLOURS[val]);
+
         }
     }
 
@@ -120,15 +151,45 @@ public class GameBlock extends Canvas {
         var gc = getGraphicsContext2D();
 
         //Clear
-        gc.clearRect(0,0,width,height);
+        gc.clearRect(0, 0, width, height);
 
         //Fill
-        gc.setFill(Color.WHITE);
-        gc.fillRect(0,0, width, height);
+        //gc.setFill(Color.WHITE);
+        gc.setFill(Color.rgb(100, 100, 100, 0.3));
+        //gc.fillRoundRect(0, 0, width, height, CORNER_RADIUS, CORNER_RADIUS);
+
+
+        //gc.drawImage(Multimedia.getImage("blockw.png"), 0, 0, width, height);
 
         //Border
-        gc.setStroke(Color.BLACK);
-        gc.strokeRect(0,0,width,height);
+        gc.setStroke(Color.rgb(150, 150, 150, 0.7));
+        gc.strokeRoundRect(0, 0, width, height, CORNER_RADIUS, CORNER_RADIUS);
+
+        //paintImage(Color.rgb(100, 100, 100, 0.5));
+    }
+
+    private void paintImage(Color color) {
+
+        //Image blankImage = Multimedia.getImage("block.png");
+        WritableImage newImage = new WritableImage((int) BASE_IMAGE.getWidth(),
+                (int) BASE_IMAGE.getHeight());
+        var reader = BASE_IMAGE.getPixelReader();
+        var writer = newImage.getPixelWriter();
+
+        for (int x = 0; x < newImage.getWidth(); x++) {
+            for (int y = 0; y < newImage.getHeight(); y++) {
+                if (reader.getColor(x, y).equals(Color.WHITE)) {
+                    writer.setColor(x, y, color);
+                } else if (reader.getColor(x, y).equals(Color.BLACK)) {
+                    writer.setColor(x, y, color.interpolate(Color.BLACK, 0.2));
+                } else {
+                    writer.setColor(x, y, reader.getColor(x, y).interpolate(color, 0.2));
+                }
+            }
+        }
+
+        var gc = getGraphicsContext2D();
+        gc.drawImage(newImage, 0, 0, width, height);
     }
 
     /**
@@ -142,12 +203,14 @@ public class GameBlock extends Canvas {
         gc.clearRect(0,0,width,height);
 
         //Colour fill
-        gc.setFill(colour);
-        gc.fillRect(0,0, width, height);
+        //gc.setFill(colour);
+        //gc.fillRoundRect(0, 0, width, height, CORNER_RADIUS, CORNER_RADIUS);
 
         //Border
-        gc.setStroke(Color.BLACK);
-        gc.strokeRect(0,0,width,height);
+        //gc.setStroke(Color.GREY);
+        //gc.strokeRoundRect(0, 0, width, height, CORNER_RADIUS, CORNER_RADIUS);
+
+        paintImage((Color) colour);
     }
 
     /**

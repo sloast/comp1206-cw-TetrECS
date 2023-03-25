@@ -2,6 +2,7 @@ package uk.ac.soton.comp1206.game;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import uk.ac.soton.comp1206.utils.Vector2Int;
 
 /**
  * The Grid is a model which holds the state of a game board. It is made up of a set of Integer values arranged in a 2D
@@ -75,8 +76,17 @@ public class Grid {
         staticGrid[x][y] = value;
     }
 
-    public void setTemp(int x, int y, int value) {
-        grid[x][y].set(value);
+    public void set(Vector2Int pos, int value) {
+        set(pos.x, pos.y, value);
+    }
+
+    public void setPreview(int x, int y, int value) {
+        if (value == -1) {
+            grid[x][y].set(-staticGrid[x][y] - 1);
+            return;
+        }
+
+        grid[x][y].set(value + 100);
     }
 
     /**
@@ -95,6 +105,10 @@ public class Grid {
         }
     }
 
+    public int get(Vector2Int pos) {
+        return get(pos.x, pos.y);
+    }
+
     public boolean inBounds(int x, int y) {
         return x >= 0 && x < cols && y >= 0 && y < rows;
     }
@@ -107,6 +121,14 @@ public class Grid {
         for (var x = 0; x < cols; x++) {
             for (var y = 0; y < rows; y++) {
                 resetTempValue(x, y);
+            }
+        }
+    }
+
+    public void reset() {
+        for (var x = 0; x < cols; x++) {
+            for (var y = 0; y < rows; y++) {
+                set(x, y, 0);
             }
         }
     }
@@ -150,13 +172,13 @@ public class Grid {
         }
     }
 
-    public void placeTempPiece(GamePiece piece, int x, int y, boolean valid) {
+    public void previewPiece(GamePiece piece, int x, int y, boolean valid) {
         x--;y--; // offset to start from center of piece
-        int value = valid ? piece.getValue() : 16;
+        int value = valid ? piece.getValue() : -1;
         for (var cx = 0; cx < piece.getBlocks().length; cx++) {
             for (var cy = 0; cy < piece.getBlocks()[0].length; cy++) {
                 if (piece.getBlocks()[cx][cy] != 0 && inBounds(x + cx, y + cy)) {
-                    setTemp(x + cx, y + cy, value);
+                    setPreview(x + cx, y + cy, value);
                 }
             }
         }
