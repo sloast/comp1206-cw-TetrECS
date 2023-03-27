@@ -1,5 +1,6 @@
 package uk.ac.soton.comp1206.event;
 
+import javafx.scene.input.MouseEvent;
 import uk.ac.soton.comp1206.component.GameBlock;
 
 /**

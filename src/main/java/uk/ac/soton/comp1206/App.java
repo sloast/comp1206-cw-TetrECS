@@ -5,8 +5,11 @@ import java.nio.file.Path;
 import javafx.application.Application;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonBar.ButtonData;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextArea;
 import javafx.stage.Stage;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import uk.ac.soton.comp1206.ui.GameWindow;
@@ -31,6 +34,8 @@ public class App extends Application {
     private static final Logger logger = LogManager.getLogger(App.class);
     private Stage stage;
 
+    public static final boolean DEBUG_MODE = true;
+
     /**
      * Start the game
      *
@@ -53,6 +58,7 @@ public class App extends Application {
         this.stage = stage;
 
         //eula();
+
         //Open game window
         openGame();
     }
@@ -64,8 +70,12 @@ public class App extends Application {
         try {
             String content = Files.readString(Path.of(
                     App.class.getResource("/style/eula.txt").getPath().substring(1)));
-            var alert = new Alert(AlertType.CONFIRMATION);
-            alert.setTitle("License Agreement");
+            var alert = new Alert(AlertType.WARNING);
+            alert.getButtonTypes().clear();
+            alert.getButtonTypes().add(new ButtonType("I agree", ButtonData.OK_DONE));
+            alert.getButtonTypes().add(new ButtonType("Cancel", ButtonData.CANCEL_CLOSE));
+
+            alert.setTitle("TetrECS License Agreement");
             alert.setHeaderText("Please agree to the license terms before continuing");
             var area = new TextArea(content);
             area.setWrapText(true);

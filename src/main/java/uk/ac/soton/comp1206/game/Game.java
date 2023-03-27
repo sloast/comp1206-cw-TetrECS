@@ -8,21 +8,25 @@ import java.util.Random;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
-import javafx.util.Duration;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import uk.ac.soton.comp1206.component.GameBlock;
-import uk.ac.soton.comp1206.component.PieceBoard;
+import uk.ac.soton.comp1206.event.GameLoopListener;
+import uk.ac.soton.comp1206.event.GameOverListener;
+import uk.ac.soton.comp1206.event.LineClearedListener;
+import uk.ac.soton.comp1206.event.NextPieceListener;
 import uk.ac.soton.comp1206.utils.Colour;
 import uk.ac.soton.comp1206.utils.Colour.TextColour;
 import uk.ac.soton.comp1206.utils.Colour.TextMode;
-import uk.ac.soton.comp1206.utils.Vector2Int;
+import uk.ac.soton.comp1206.utils.Vector2;
 
 /**
- * The Game class handles the main logic, state and properties of the TetrECS game. Methods to manipulate the game state
- * and to handle actions made by the player should take place inside this class.
+ * The Game class handles the main logic, state and properties of the TetrECS game. Methods to
+ * manipulate the game state and to handle actions made by the player should take place inside this
+ * class.
  */
 public class Game {
 
@@ -51,12 +55,10 @@ public class Game {
     private GamePiece currentPiece = null;
     private GamePiece nextPiece = null;
 
-    public PieceBoard currentPieceBoard;
-    public PieceBoard nextPieceBoard;
-
     private final Random random = new Random();
 
-    private GameBlock hoveredBlock = null;
+    public GameBlock hoveredBlock = null;
+    public GameBlock lastHoveredBlock = null;
 
     private Queue<Integer> pieceQueue = new LinkedList<>();
 
@@ -66,9 +68,14 @@ public class Game {
     public IntegerProperty level = new SimpleIntegerProperty(0);
     public IntegerProperty multiplier = new SimpleIntegerProperty(1);
 
+    protected NextPieceListener nextPieceListener;
+    protected LineClearedListener lineClearedListener;
+    protected GameOverListener gameOverListener;
+    protected GameLoopListener gameLoopListener;
 
     /**
      * Create a new game with the specified rows and columns. Creates a corresponding grid model.
+     *
      * @param cols number of columns
      * @param rows number of rows
      */
@@ -77,7 +84,7 @@ public class Game {
         this.rows = rows;
 
         //Create a new grid model to represent the game state
-        this.grid = new Grid(cols,rows);
+        this.grid = new Grid(cols, rows);
 
 
     }
@@ -90,6 +97,8 @@ public class Game {
         initialiseGame();
 
         running = true;
+
+        gameLoopListener.onGameLoop(getTimerDelayMs());
         refreshPreview();
     }
 
@@ -102,18 +111,46 @@ public class Game {
         nextPiece();
     }
 
+
+    public void loseLife() {
+        lives.set(lives.get() - 1);
+        if (lives.get() <= 0) {
+            onDied();
+        }
+    }
+
+    /**
+     * When the player loses all their lives
+     */
     public void onDied() {
         running = false;
         logger.info(Colour.colour("Game over!", TextColour.PURPLE, TextMode.BOLD));
+
+        stop();
+    }
+
+    public void stop() {
+        logger.info(Colour.colour("Game stopped.", TextColour.PURPLE, TextMode.BOLD));
+
+        grid.reset();
+        //currentPieceBoard.setPiece(null);
+        //nextPieceBoard.setPiece(null);
+
+        running = false;
+
+        gameOverListener.onGameOver();
     }
 
     /**
      * Handle what should happen when a particular block is clicked
+     *
      * @param gameBlock the block that was clicked
      */
     public void blockClicked(GameBlock gameBlock) {
 
-        if (!running) return;
+        if (!running) {
+            return;
+        }
 
         //Get the position of this block
         int x = gameBlock.getX();
@@ -128,29 +165,40 @@ public class Game {
         }
     }
 
-    public void blockClicked() {
-        if (hoveredBlock != null) {
+    public void keyboardPlayPiece() {
+        if (hoveredBlock != null) { // && usingKeyboard) {
             this.blockClicked(hoveredBlock);
         }
     }
 
     public void onBlockHoverEnter(GameBlock gameBlock) {
-        if (!running) return;
-        if (usingKeyboard) usingKeyboard = false;
+        if (!running) {
+            return;
+        }
+        if (usingKeyboard) {
+            usingKeyboard = false;
+        }
 
         hoveredBlock = gameBlock;
+        gameBlock.hoverEnter();
         refreshPreview();
     }
 
     public void onBlockHoverExit(GameBlock gameBlock) {
-        if (!running) return;
+        if (!running) {
+            return;
+        }
 
+        lastHoveredBlock = hoveredBlock;
         hoveredBlock = null;
+        gameBlock.hoverExit();
         refreshPreview();
     }
 
     public void rotateCurrentPiece() {
-        if (!running) return;
+        if (!running) {
+            return;
+        }
 
         logger.info("Rotating current piece");
 
@@ -159,7 +207,9 @@ public class Game {
     }
 
     public void rotateCurrentPieceReverse() {
-        if (!running) return;
+        if (!running) {
+            return;
+        }
 
         logger.info("Rotating current piece");
 
@@ -170,7 +220,9 @@ public class Game {
     }
 
     private void refreshPreview() {
-        if (!running) return;
+        if (!running) {
+            return;
+        }
 
         //logger.info("refresh");
 
@@ -178,8 +230,9 @@ public class Game {
         if (hoveredBlock != null) {
             previewPiece(hoveredBlock);
         }
-        currentPieceBoard.setPiece(currentPiece);
-        nextPieceBoard.setPiece(nextPiece);
+        updatePieceBoards();
+        // currentPieceBoard.setPiece(currentPiece);
+        // nextPieceBoard.setPiece(nextPiece);
     }
 
     private void previewPiece(GameBlock gameBlock) {
@@ -189,7 +242,7 @@ public class Game {
 
     private void afterPiece() {
         int clearedRows = 0;
-        var clearedBlocks = new HashSet<Vector2Int>();
+        var clearedBlocks = new HashSet<Vector2>();
 
         for (int y = 0; y < rows; y++) {
             boolean full = true;
@@ -202,7 +255,7 @@ public class Game {
             if (full) {
                 clearedRows++;
                 for (int x = 0; x < cols; x++) {
-                    clearedBlocks.add(new Vector2Int(x, y));
+                    clearedBlocks.add(new Vector2(x, y));
                 }
             }
         }
@@ -218,7 +271,7 @@ public class Game {
             if (full) {
                 clearedRows++;
                 for (int y = 0; y < rows; y++) {
-                    clearedBlocks.add(new Vector2Int(x, y));
+                    clearedBlocks.add(new Vector2(x, y));
                 }
             }
         }
@@ -226,24 +279,24 @@ public class Game {
         score(clearedRows, clearedBlocks.size());
 
         if (clearedRows > 0) {
-            logger.info(Colour.colour("Cleared " + clearedRows + " rows",
+            logger.info(Colour.colour(
+                    "Cleared " + clearedRows + (clearedRows == 1 ? " row" : " rows"),
                     TextColour.GREEN, TextMode.ITALIC));
 
-
+            lineClearedListener.onLineCleared(clearedBlocks);
 
             for (var block : clearedBlocks) {
                 grid.set(block.x, block.y, 0);
             }
-        }
-    }
 
-    public void nextPiece() {
-        this.nextPiece(false);
+
+        }
     }
 
 
     /**
      * Get the grid model inside this game representing the game state of the board
+     *
      * @return game grid model
      */
     public Grid getGrid() {
@@ -252,6 +305,7 @@ public class Game {
 
     /**
      * Get the number of columns in this game
+     *
      * @return number of columns
      */
     public int getCols() {
@@ -260,10 +314,15 @@ public class Game {
 
     /**
      * Get the number of rows in this game
+     *
      * @return number of rows
      */
     public int getRows() {
         return rows;
+    }
+
+    public void nextPiece() {
+        this.nextPiece(false);
     }
 
     public void nextPiece(boolean reset) {
@@ -289,21 +348,45 @@ public class Game {
 
         // Take the next piece from the queue
         currentPiece = nextPiece;
-        nextPiece = GamePiece.createPiece(pieceQueue.remove());
+        nextPiece = GamePiece.createPiece(pieceQueue.remove(), random.nextInt(4));
 
         if (currentPiece == null || nextPiece.getValue() == currentPiece.getValue()) {
             nextPiece();
             return;
         }
 
-        currentPieceBoard.setPiece(currentPiece);
-        nextPieceBoard.setPiece(nextPiece);
+        //currentPieceBoard.setPiece(currentPiece);
+        //nextPieceBoard.setPiece(nextPiece);
 
         refreshPreview();
     }
 
+    private void updatePieceBoards() {
+        if (nextPieceListener != null) {
+            nextPieceListener.onNextPiece(currentPiece, nextPiece);
+        }
+    }
+
+    public void setOnNextPiece(NextPieceListener nextPieceListener) {
+        this.nextPieceListener = nextPieceListener;
+    }
+
+    public void setOnLineCleared(LineClearedListener lineClearedListener) {
+        this.lineClearedListener = lineClearedListener;
+    }
+
+    public void setOnGameOver(GameOverListener gameOverListener) {
+        this.gameOverListener = gameOverListener;
+    }
+
+    public void setOnGameLoop(GameLoopListener gameLoopListener) {
+        this.gameLoopListener = gameLoopListener;
+    }
+
     public void swapPieces() {
-        if (!running) return;
+        if (!running) {
+            return;
+        }
 
         var temp = currentPiece;
         currentPiece = nextPiece;
@@ -341,15 +424,40 @@ public class Game {
             ));
             anim.play();
 
-            logger.info("Scored {} points", linesCleared * blocksCleared * 10 * multiplier.get());
+            logger.info(Colour.green("Scored {} points"), linesCleared * blocksCleared * 10 * multiplier.get());
         } else {
             multiplier.set(1);
         }
 
         //displayedScore.set(actualScore.get());
 
+    }
 
+    public void hoverBlockKeyboard(GameBlock block) {
+        if (block == null) {
+            return;
+        }
+
+        if (!usingKeyboard) {
+            usingKeyboard = true;
+        }
+
+        if (hoveredBlock != null) {
+            hoveredBlock.hoverExit();
+        }
+
+        hoveredBlock = block;
+        block.hoverEnter();
+
+        refreshPreview();
     }
 
 
+    public boolean isRunning() {
+        return running;
+    }
+
+    public double getTimerDelayMs() {
+        return Math.max(2500, 12000 - 500 * level.get());
+    }
 }

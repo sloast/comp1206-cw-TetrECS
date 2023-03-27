@@ -14,7 +14,10 @@ import javafx.scene.control.Button;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
@@ -37,6 +40,7 @@ public class MenuScene extends BaseScene {
 
     /**
      * Create a new menu scene
+     *
      * @param gameWindow the Game Window this will be displayed in
      */
     public MenuScene(GameWindow gameWindow) {
@@ -53,8 +57,8 @@ public class MenuScene extends BaseScene {
 
         StringBuilder text = new StringBuilder();
 
-        for (int y = 0; y < writeableImage.getHeight(); y+=4) {
-            for (int x = 0; x < writeableImage.getWidth(); x+=2) {
+        for (int y = 0; y < writeableImage.getHeight(); y += 4) {
+            for (int x = 0; x < writeableImage.getWidth(); x += 2) {
                 var color = reader.getColor(x, y);
                 if (color.getBrightness() > .1) {
                     text.append("#");
@@ -93,7 +97,7 @@ public class MenuScene extends BaseScene {
         mainPane.setTop(titleImgContainer);
 
         Timeline timeline = new Timeline(new KeyFrame(Duration.millis(100),
-                event -> updateTitle() ));
+                event -> updateTitle()));
 
         timeline.setCycleCount(Timeline.INDEFINITE);
         timeline.play();
@@ -118,7 +122,7 @@ public class MenuScene extends BaseScene {
     public void build() {
         logger.info("Building " + this.getClass().getName());
 
-        root = new GamePane(gameWindow.getWidth(),gameWindow.getHeight());
+        root = new GamePane(gameWindow.getWidth(), gameWindow.getHeight());
 
         var backgroundPane = new StackPane();
         backgroundPane.setMaxWidth(gameWindow.getWidth());
@@ -137,7 +141,6 @@ public class MenuScene extends BaseScene {
 
         mainPane.setPadding(new Insets(20, 20, 20, 20));
 
-
         var titleImgContainer = makeTitleImg(mainPane);
 
         var menuBox = new VBox();
@@ -145,11 +148,12 @@ public class MenuScene extends BaseScene {
         menuBox.setAlignment(Pos.CENTER);
         //menuBox.getStyleClass().add("menuItem");
 
-
         var startSinglePlayer = new Button("Single Player");
         startSinglePlayer.getStyleClass().add("menuItem");
         menuBox.getChildren().add(startSinglePlayer);
         mainPane.setCenter(menuBox);
+        //Bind the button action to the startGame method in the menu
+        startSinglePlayer.setOnAction(this::startGame);
 
         var multiplayer = new Button("Multiplayer");
         multiplayer.getStyleClass().add("menuItem");
@@ -161,6 +165,8 @@ public class MenuScene extends BaseScene {
         menuBox.getChildren().add(instructions);
         mainPane.setCenter(menuBox);
 
+        instructions.setOnAction(this::startInstructions);
+
         var settings = new Button("Settings");
         settings.getStyleClass().add("menuItem");
         menuBox.getChildren().add(settings);
@@ -171,12 +177,8 @@ public class MenuScene extends BaseScene {
         menuBox.getChildren().add(exit);
         mainPane.setCenter(menuBox);
 
+        exit.setOnAction(e -> System.exit(0));
 
-
-        //Bind the button action to the startGame method in the menu
-        startSinglePlayer.setOnAction(this::startGame);
-
-        instructions.setOnAction(this::startInstructions);
 
 
         backgroundPane.opacityProperty().set(0);
@@ -227,6 +229,7 @@ public class MenuScene extends BaseScene {
 
     /**
      * Handle when the Start Game button is pressed
+     *
      * @param event event
      */
     private void startGame(ActionEvent event) {

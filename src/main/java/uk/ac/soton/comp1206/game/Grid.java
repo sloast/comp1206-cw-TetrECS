@@ -2,7 +2,7 @@ package uk.ac.soton.comp1206.game;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import uk.ac.soton.comp1206.utils.Vector2Int;
+import uk.ac.soton.comp1206.utils.Vector2;
 
 /**
  * The Grid is a model which holds the state of a game board. It is made up of a set of Integer values arranged in a 2D
@@ -76,7 +76,7 @@ public class Grid {
         staticGrid[x][y] = value;
     }
 
-    public void set(Vector2Int pos, int value) {
+    public void set(Vector2 pos, int value) {
         set(pos.x, pos.y, value);
     }
 
@@ -105,7 +105,7 @@ public class Grid {
         }
     }
 
-    public int get(Vector2Int pos) {
+    public int get(Vector2 pos) {
         return get(pos.x, pos.y);
     }
 

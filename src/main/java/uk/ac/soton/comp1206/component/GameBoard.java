@@ -1,20 +1,26 @@
 package uk.ac.soton.comp1206.component;
 
+import java.util.Arrays;
+import java.util.Set;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import uk.ac.soton.comp1206.event.BlockClickedListener;
 import uk.ac.soton.comp1206.event.BlockHoverEnterListener;
 import uk.ac.soton.comp1206.event.BlockHoverExitListener;
+import uk.ac.soton.comp1206.event.RightClickedListener;
 import uk.ac.soton.comp1206.game.Grid;
+import uk.ac.soton.comp1206.utils.Colour;
+import uk.ac.soton.comp1206.utils.Vector2;
 
 /**
  * A GameBoard is a visual component to represent the visual GameBoard.
  * It extends a GridPane to hold a grid of GameBlocks.
  *
- * The GameBoard can hold an internal grid of it's own, for example, for displaying an upcoming block. It also be
+ * The GameBoard can hold an internal grid of its own, for example, for displaying an upcoming block. It can also be
  * linked to an external grid, for the main game board.
  *
  * The GameBoard is only a visual representation and should not contain game logic or model logic in it, which should
@@ -54,12 +60,15 @@ public class GameBoard extends GridPane {
      */
     GameBlock[][] blocks;
 
+    private boolean isMainBoard = true;
+
     /**
      * The listener to call when a specific block is clicked
      */
     private BlockClickedListener blockClickedListener;
     private BlockHoverEnterListener blockHoverEnterListener;
     private BlockHoverExitListener blockHoverExitListener;
+    private RightClickedListener rightClickedListener;
 
 
     /**
@@ -79,8 +88,20 @@ public class GameBoard extends GridPane {
         build();
     }
 
+    public GameBoard(Grid grid, double width, double height, boolean isMainBoard) {
+        this.cols = grid.getCols();
+        this.rows = grid.getRows();
+        this.width = width;
+        this.height = height;
+        this.grid = grid;
+        this.isMainBoard = isMainBoard;
+
+        //Build the GameBoard
+        build();
+    }
+
     /**
-     * Create a new GameBoard with it's own internal grid, specifying the number of columns and rows, along with the
+     * Create a new GameBoard with its own internal grid, specifying the number of columns and rows, along with the
      * visual width and height.
      *
      * @param cols number of columns for internal grid
@@ -107,6 +128,10 @@ public class GameBoard extends GridPane {
      */
     public GameBlock getBlock(int x, int y) {
         return blocks[x][y];
+    }
+
+    public GameBlock getBlock(Vector2 pos) {
+        return blocks[pos.x][pos.y];
     }
 
     /**
@@ -155,6 +180,7 @@ public class GameBoard extends GridPane {
         block.setOnMouseEntered((e) -> blockHoverEntered(e, block));
         block.setOnMouseExited((e) -> blockHoverExited(e, block));
 
+
         return block;
     }
 
@@ -174,6 +200,10 @@ public class GameBoard extends GridPane {
         this.blockHoverExitListener = listener;
     }
 
+    public void setOnRightClick(RightClickedListener listener) {
+        this.rightClickedListener = listener;
+    }
+
     /**
      * Triggered when a block is clicked. Call the attached listener.
      * @param event mouse event
@@ -181,10 +211,23 @@ public class GameBoard extends GridPane {
      */
     private void blockClicked(MouseEvent event, GameBlock block) {
 
-        if(blockClickedListener != null && event.getButton() == MouseButton.PRIMARY) {
-            logger.info("Block clicked: {}, {}", block.getX(), block.getX());
+        if (blockClickedListener != null && event.getButton() == MouseButton.PRIMARY) {
+            logger.info(colourIfMain("Block clicked: {}, {}"), block.getX(), block.getX());
             blockClickedListener.blockClicked(block);
+            event.consume();
+        } else if (rightClickedListener != null && event.getButton() == MouseButton.SECONDARY) {
+            logger.info(colourIfMain("Block right clicked: {}, {}"), block.getX(), block.getX());
+
+            rightClickedListener.onRightClicked(block);
+            event.consume();
         }
+    }
+
+    private String colourIfMain(String message) {
+        if (isMainBoard)
+            return Colour.cyan(Colour.underline(message + " on main"));
+        else
+            return Colour.cyan(Colour.italic(message + " on piece"));
     }
 
     private void blockHoverEntered(MouseEvent event, GameBlock block) {
@@ -201,7 +244,27 @@ public class GameBoard extends GridPane {
         }
     }
 
+    private void onRightClick(MouseEvent event, GameBlock block) {
+        if(rightClickedListener != null) {
+            rightClickedListener.onRightClicked(block);
+            event.consume();
+        }
+    }
+
     public Grid getGrid() {
         return grid;
     }
+
+    public void lineCleared(Set<Vector2> blocks, Pane rootPane) {
+        Vector2[] blocksArray = blocks.toArray(Vector2[]::new);
+        Arrays.sort(blocksArray, Vector2::compareTo);
+        var delay = 0;
+
+        for (var block : blocksArray) {
+            getBlock(block).fadeOut(rootPane, delay);
+            delay += 40;
+        }
+    }
+
+
 }

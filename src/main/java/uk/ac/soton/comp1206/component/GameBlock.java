@@ -1,21 +1,30 @@
 package uk.ac.soton.comp1206.component;
 
+import java.util.HashMap;
+import javafx.animation.AnimationTimer;
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.ScaleTransition;
+import javafx.animation.Timeline;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.value.ObservableValue;
-import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.effect.Blend;
-import javafx.scene.effect.BlendMode;
-import javafx.scene.effect.ColorAdjust;
-import javafx.scene.effect.ColorInput;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.*;
+import javafx.util.Duration;
+import javafx.util.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import uk.ac.soton.comp1206.utils.Multimedia;
+import uk.ac.soton.comp1206.utils.Vector2;
 
 /**
  * The Visual User Interface component representing a single block in the grid.
@@ -70,8 +79,13 @@ public class GameBlock extends Canvas {
      * The row this block exists as in the grid
      */
     private final int y;
-    private static final int CORNER_RADIUS = 15;
+
+    private final BooleanProperty hovered = new SimpleBooleanProperty(false);
+    private int corner_radius = 25;
+    private static final double BASE_WIDTH = 100;
     private static final Image BASE_IMAGE = Multimedia.getImage("block.png", 160);
+
+    protected static final HashMap<Pair<Integer, Boolean>, Image> imageCache = new HashMap<>();
 
     /**
      * The value of this block (0 = empty, otherwise specifies the colour to render as)
@@ -93,6 +107,8 @@ public class GameBlock extends Canvas {
         this.x = x;
         this.y = y;
 
+        this.corner_radius *= this.width / BASE_WIDTH;
+
         //A canvas needs a fixed width and height
         setWidth(width);
         setHeight(height);
@@ -102,7 +118,9 @@ public class GameBlock extends Canvas {
 
         //When the value property is updated, call the internal updateValue method
         value.addListener(this::updateValue);
+        hovered.addListener(this::updateBoolean);
     }
+
 
     /**
      * When the value of this block is updated,
@@ -114,11 +132,16 @@ public class GameBlock extends Canvas {
         paint();
     }
 
+    private void updateBoolean(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+        paint();
+    }
+
     /**
      * Handle painting of the block canvas
      */
     public void paint() {
         //If the block is empty, paint as empty
+
         var val = value.get();
         if(val == 0) {
             //paintEmpty();
@@ -140,8 +163,21 @@ public class GameBlock extends Canvas {
         } else {
             //If the block is not empty, paint with the colour represented by the value
             paintColor(COLOURS[val]);
-
         }
+
+        if (hovered.get()) {
+            //paintHover();
+        }
+    }
+
+    private void paintHover() {
+        var gc = getGraphicsContext2D();
+        gc.setLineWidth(5);
+        gc.setStroke(Color.rgb(255, 255, 255, 0.7));
+        var radius = 0;
+        gc.strokeRoundRect(0, 0, width, height, radius, radius);
+
+        //gc.strokeLine(0, 0, width, height);
     }
 
     /**
@@ -162,13 +198,22 @@ public class GameBlock extends Canvas {
         //gc.drawImage(Multimedia.getImage("blockw.png"), 0, 0, width, height);
 
         //Border
+        gc.setLineWidth(1);
         gc.setStroke(Color.rgb(150, 150, 150, 0.7));
-        gc.strokeRoundRect(0, 0, width, height, CORNER_RADIUS, CORNER_RADIUS);
+
+        gc.strokeRoundRect(0, 0, width, height, corner_radius, corner_radius);
 
         //paintImage(Color.rgb(100, 100, 100, 0.5));
     }
 
-    private void paintImage(Color color) {
+    protected void paintImage(Color color) {
+
+        var key = new Pair<>(value.get(), hovered.get());
+        if (imageCache.containsKey(key)) {
+            var image = imageCache.get(key);
+            getGraphicsContext2D().drawImage(image, 0, 0, width, height);
+            return;
+        }
 
         //Image blankImage = Multimedia.getImage("block.png");
         WritableImage newImage = new WritableImage((int) BASE_IMAGE.getWidth(),
@@ -176,17 +221,27 @@ public class GameBlock extends Canvas {
         var reader = BASE_IMAGE.getPixelReader();
         var writer = newImage.getPixelWriter();
 
+
+
         for (int x = 0; x < newImage.getWidth(); x++) {
             for (int y = 0; y < newImage.getHeight(); y++) {
+
                 if (reader.getColor(x, y).equals(Color.WHITE)) {
                     writer.setColor(x, y, color);
                 } else if (reader.getColor(x, y).equals(Color.BLACK)) {
                     writer.setColor(x, y, color.interpolate(Color.BLACK, 0.2));
                 } else {
-                    writer.setColor(x, y, reader.getColor(x, y).interpolate(color, 0.2));
+                    if (hovered.get() && reader.getColor(x, y).isOpaque()) {
+                        writer.setColor(x, y, Color.WHITE);
+                    } else {
+                        writer.setColor(x, y, reader.getColor(x, y).interpolate(color, 0.2));
+                    }
                 }
+
             }
         }
+
+        imageCache.put(key, newImage);
 
         var gc = getGraphicsContext2D();
         gc.drawImage(newImage, 0, 0, width, height);
@@ -197,6 +252,7 @@ public class GameBlock extends Canvas {
      * @param colour the colour to paint
      */
     private void paintColor(Paint colour) {
+
         var gc = getGraphicsContext2D();
 
         //Clear
@@ -243,6 +299,51 @@ public class GameBlock extends Canvas {
      */
     public void bind(ObservableValue<? extends Number> input) {
         value.bind(input);
+    }
+
+    public void hoverEnter() {
+        this.hovered.set(true);
+    }
+
+    public void hoverExit() {
+        this.hovered.set(false);
+    }
+
+    public Vector2 getPosition() {
+        return new Vector2(x, y);
+    }
+
+    public void fadeOut(Pane parent, double delay) {
+        logger.info("Fading out block at " + x + ", " + y + " with value " + value.get());
+
+        var child = new GameBlock(null, x, y, width, height);
+        child.value.set(value.get());
+        child.paint();
+
+        var childPos = gameBoard.localToParent(getLayoutX(), getLayoutY());
+
+        child.setLayoutX(childPos.getX());
+        child.setLayoutY(childPos.getY());
+
+        child.setMouseTransparent(true);
+
+        double duration = 250;
+
+        ScaleTransition scaleTransition = new ScaleTransition(Duration.millis(duration), child);
+        scaleTransition.setFromX(1);
+        scaleTransition.setFromY(1);
+        scaleTransition.setToX(0);
+        scaleTransition.setToY(0);
+        scaleTransition.setInterpolator(Interpolator.EASE_IN);
+
+        scaleTransition.setOnFinished(event -> parent.getChildren().remove(child));
+
+        scaleTransition.setDelay(Duration.millis(delay));
+
+        scaleTransition.play();
+
+
+        parent.getChildren().add(child);
     }
 
 }

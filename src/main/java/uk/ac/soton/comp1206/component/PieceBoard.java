@@ -6,14 +6,12 @@ import uk.ac.soton.comp1206.game.Grid;
 public class PieceBoard extends GameBoard {
 
 
-
-
     public PieceBoard(Grid grid, double width, double height) {
-        super(grid, width, height);
+        super(grid, width, height, false);
     }
 
     public PieceBoard(double width, double height) {
-        super(new Grid(3, 3), width, height);
+        super(new Grid(3, 3), width, height, false);
     }
 
     public void setPiece(GamePiece piece) {
