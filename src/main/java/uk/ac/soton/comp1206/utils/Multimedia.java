@@ -1,10 +1,14 @@
 package uk.ac.soton.comp1206.utils;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
+import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -21,6 +25,7 @@ public class Multimedia {
 
     private static MediaPlayer soundEffectPlayer;
     private static MediaPlayer musicPlayer;
+    private static MediaPlayer musicPlayer2;
 
     public static DoubleProperty musicVolume = new SimpleDoubleProperty(0.5);
     public static DoubleProperty soundEffectVolume = new SimpleDoubleProperty(0.5);
@@ -45,23 +50,89 @@ public class Multimedia {
         musicPlayer.play();
     }
 
-    public static void startMusicIntro(String intro, String mainloop) throws NullPointerException {
+    public static void startMusicIntro(String intro, String mainLoop) throws NullPointerException {
         if (musicPlayer != null) {
             musicPlayer.stop();
         }
         musicPlayer = new MediaPlayer(loadMusic(intro));
         musicPlayer.volumeProperty().bind(masterVolume.multiply(musicVolume));
         musicPlayer.setOnEndOfMedia(() -> {
-            startMusic(mainloop);
+            startMusic(mainLoop);
         });
         musicPlayer.play();
     }
 
+    public static void startMusic(String filename, String altFilename) throws NullPointerException {
+        if (musicPlayer != null) {
+            musicPlayer.stop();
+        }
+        musicPlayer = new MediaPlayer(loadMusic(filename));
+        musicPlayer.volumeProperty().bind(masterVolume.multiply(musicVolume));
+        musicPlayer.setCycleCount(MediaPlayer.INDEFINITE);
+        musicPlayer.play();
+
+        musicPlayer2 = new MediaPlayer(loadMusic(altFilename));
+        musicPlayer2.volumeProperty().set(0.);
+        musicPlayer2.setCycleCount(MediaPlayer.INDEFINITE);
+        musicPlayer2.play();
+    }
+
+    public static void startMusicIntro(String intro, String mainLoop, String altMainLoop)
+            throws NullPointerException {
+        startMusicIntro(intro, mainLoop);
+        musicPlayer2 = new MediaPlayer(loadMusic(altMainLoop));
+        musicPlayer2.volumeProperty().set(0.);
+        musicPlayer2.setCycleCount(MediaPlayer.INDEFINITE);
+        musicPlayer2.play();
+    }
+
     public static void playSound(String filename) throws NullPointerException {
-        soundEffectPlayer.stop();
+        if (soundEffectPlayer != null) {
+            soundEffectPlayer.stop();
+        }
         soundEffectPlayer = new MediaPlayer(loadSound(filename));
         soundEffectPlayer.volumeProperty().bind(masterVolume.multiply(soundEffectVolume));
         soundEffectPlayer.play();
+    }
+
+    public static void crossfadeMusic(Duration duration) throws NullPointerException {
+
+        if (musicPlayer == null || musicPlayer2 == null) {
+            logger.error("Cannot crossfade music when only one music track is playing");
+            return;
+        }
+
+        DoubleProperty volume1 = new SimpleDoubleProperty(musicVolume.get());
+        DoubleProperty volume2 = new SimpleDoubleProperty(0);
+
+        musicPlayer.volumeProperty().unbind();
+        musicPlayer.volumeProperty().bind(volume1);
+        musicPlayer2.volumeProperty().unbind();
+        musicPlayer2.volumeProperty().bind(volume2);
+
+        Timeline timeline = new Timeline(
+                new KeyFrame(Duration.ZERO,
+                        new KeyValue(volume1, 1)),
+                new KeyFrame(Duration.ZERO,
+                        new KeyValue(volume2, 0)),
+                new KeyFrame(duration,
+                        new KeyValue(volume1, 0)),
+                new KeyFrame(duration,
+                        new KeyValue(volume2, 1))
+        );
+
+        timeline.play();
+    }
+
+    public static void revertCrossfade() {
+        if (musicPlayer != null) {
+            musicPlayer.volumeProperty().unbind();
+            musicPlayer.volumeProperty().bind(masterVolume.multiply(musicVolume));
+        }
+        if (musicPlayer2 != null) {
+            musicPlayer2.volumeProperty().unbind();
+            musicPlayer2.volumeProperty().set(0.);
+        }
     }
 
 
@@ -74,6 +145,7 @@ public class Multimedia {
 
     /**
      * Stops music or sound effects
+     *
      * @param category which type of sound to stop
      */
     public static void stop(Category category) {
@@ -103,7 +175,6 @@ public class Multimedia {
     public static Image getImage(String filename) throws NullPointerException {
         return new Image(Multimedia.class.getResource(IMAGE_PATH + filename).toExternalForm());
     }
-
 
 
 }

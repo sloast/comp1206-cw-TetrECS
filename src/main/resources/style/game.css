@@ -6,6 +6,17 @@
     -fx-background-color: black;
 }
 
+.generic-box {
+    -fx-border-color: #606060;
+    -fx-border-width: 5;
+    -fx-border-radius: 0;
+    -fx-background-color: rgba(59, 59, 59, 0.7);
+    -fx-border-insets: 5;
+    -fx-background-insets: 5;
+    -fx-padding: 5;
+
+}
+
 .menu-background {
     -fx-background-image: url("../images/1.jpg");
     -fx-background-size: cover;
@@ -13,7 +24,7 @@
 }
 
 .challenge-background {
-    -fx-background-image: url("../images/2.jpg");
+    -fx-background-image: url("../images/pixelstars_(by_@anasabdin).gif");
     -fx-background-color: black;
     -fx-background-size: cover;
 }
@@ -36,10 +47,6 @@
 
 .menuItem:selected {
     -fx-text-fill: red;
-}
-
-.menuItem.selected {
-    -fx-text-fill: blue;
 }
 
 .bigtitle {
@@ -127,21 +134,31 @@
     -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
 }
 
-.scorelist {
+.scores-list {
     -fx-font-size: 20px;
     -fx-font-family: 'manaspace';
+    -fx-text-fill: white;
 }
 
-.scoreitem {
+.scores-item {
+    -fx-font-size: 26px;
+    -fx-font-family: 'manaspace';
+    -fx-text-fill: white;
+}
 
+.score-entry-box {
+    -fx-font-size: 24px;
+    -fx-font-family: 'manaspace';
+    -fx-text-fill: white;
+    -fx-padding: 2;
 }
 
 .scorer {
 
 }
 
-.myscore {
-    -fx-font-weight: 700;
+.my-score {
+    -fx-text-fill: yellow;
 }
 
 .deadscore {

@@ -1,18 +1,20 @@
 package uk.ac.soton.comp1206.scene;
 
 import java.util.concurrent.ScheduledExecutorService;
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
 import javafx.animation.ScaleTransition;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
@@ -24,7 +26,6 @@ import uk.ac.soton.comp1206.component.GameBlock;
 import uk.ac.soton.comp1206.component.GameBoard;
 import uk.ac.soton.comp1206.component.PieceBoard;
 import uk.ac.soton.comp1206.game.Game;
-import uk.ac.soton.comp1206.ui.GamePane;
 import uk.ac.soton.comp1206.ui.GameWindow;
 import uk.ac.soton.comp1206.utils.Colour;
 import uk.ac.soton.comp1206.utils.Multimedia;
@@ -46,8 +47,10 @@ public class ChallengeScene extends BaseScene {
     public PieceBoard nextPieceBoard;
 
     public ScheduledExecutorService gameTimer;
+    public static final boolean USE_GAME_INTERNAL_TIMER = false;
 
     public BorderPane mainPane;
+    private GameTimer timer;
 
 
     /**
@@ -69,22 +72,12 @@ public class ChallengeScene extends BaseScene {
 
         setupGame();
 
-        root = new GamePane(gameWindow.getWidth(), gameWindow.getHeight());
-
-        var challengePane = new StackPane();
-        challengePane.setMaxWidth(gameWindow.getWidth());
-        challengePane.setMaxHeight(gameWindow.getHeight());
-        challengePane.getStyleClass().add("menu-background");
-        root.getChildren().add(challengePane);
-
-        mainPane = new BorderPane();
-        challengePane.getChildren().add(mainPane);
+        var mainPane = mainPane("challenge-background");
 
         board = new GameBoard(game.getGrid(),
                 gameWindow.getWidth() / 2.,
                 gameWindow.getWidth() / 2.);
         mainPane.setCenter(board);
-
 
         VBox pieceBoardContainer = new VBox();
 
@@ -99,7 +92,6 @@ public class ChallengeScene extends BaseScene {
                 gameWindow.getWidth() * nextPieceRatio);
         //game.nextPieceBoard = nextPiece;
         pieceBoardContainer.getChildren().add(nextPieceBoard);
-
 
         pieceBoardContainer.alignmentProperty().set(Pos.CENTER);
         VBox.setMargin(nextPieceBoard, new Insets(20, 0, 0, 0));
@@ -165,10 +157,17 @@ public class ChallengeScene extends BaseScene {
             livesContainer.alignmentProperty().set(Pos.CENTER);
             livesContainer.getChildren().forEach(node -> {
                 node.setTranslateY(-40);
-                node.setTranslateX(20);
+                node.setTranslateX(10);
             });
         }
         mainPane.setLeft(livesContainer);
+
+        var timerContainer = new HBox();
+        timer = new GameTimer(0, 0, 700, 20);
+        timerContainer.getChildren().add(timer);
+        timerContainer.setAlignment(Pos.CENTER);
+        mainPane.setBottom(timerContainer);
+        HBox.setMargin(timer, new Insets(20, 0, 20, 0));
 
         // Set up event listeners
         game.setOnLineCleared(s -> board.lineCleared(s, mainPane));
@@ -177,7 +176,7 @@ public class ChallengeScene extends BaseScene {
             this.nextPieceBoard.setPiece(followingPiece);
         });
         game.setOnGameOver(this::gameOver);
-        game.setOnGameLoop(this::resetTimer);
+        game.setOnGameLoop(timer::reset);
 
         //Handle block on gameboard grid being clicked
         board.setOnBlockClick(this::blockClicked);
@@ -232,6 +231,7 @@ public class ChallengeScene extends BaseScene {
 
         //Start new game
         game = new Game(5, 5);
+        Game.USE_EXECUTOR_SERVICE = USE_GAME_INTERNAL_TIMER;
     }
 
     /**
@@ -247,6 +247,11 @@ public class ChallengeScene extends BaseScene {
         Multimedia.startMusicIntro("game_start.wav", "game.wav");
         Multimedia.musicVolume.set(0);
 
+        scene.addEventFilter(KeyEvent.KEY_RELEASED, e -> {
+            if (e.getCode() == KeyCode.SHIFT) {
+                timer.speedUp(false);
+            }
+        });
         if (App.DEBUG_MODE) {
             scene.addEventFilter(KeyEvent.KEY_PRESSED, this::testingKeyBinds);
         }
@@ -267,6 +272,7 @@ public class ChallengeScene extends BaseScene {
             case Q, Z, OPEN_BRACKET -> game.rotateCurrentPieceReverse();
             case R, SPACE -> game.swapPieces();
             case ENTER -> game.keyboardPlayPiece();
+            case SHIFT -> timer.speedUp(true);
             case ESCAPE -> {
                 game.stop();
                 gameWindow.startMenu();
@@ -326,28 +332,75 @@ public class ChallengeScene extends BaseScene {
         game.hoverBlockKeyboard(hoveredBlock);
     }
 
-    void resetTimer(double ms) {
-        Rectangle timerBar = new Rectangle(0, 0, 0, 0);
-        timerBar.setFill(Color.GREEN);
+    /**
+     * The Timer at the bottom of the screen
+     */
+    public class GameTimer extends Rectangle {
 
-        ScaleTransition transition = new ScaleTransition(Duration.millis(ms), timerBar);
+        private ScaleTransition scaleTransition;
+        private KeyFrame orangeKeyFrame = new KeyFrame(Duration.millis(1000),
+                e -> this.setFill(Color.ORANGE));
+        private KeyFrame redKeyFrame = new KeyFrame(Duration.millis(500),
+                e -> this.setFill(Color.RED));
 
-        transition.setFromX(1);
-        transition.setToX(0);
-        transition.setCycleCount(1);
-        transition.setAutoReverse(false);
+        public GameTimer(double x, double y, double width, double height) {
+            super(x, y, width, height);
+            this.setFill(Color.GREEN);
+        }
 
-        transition.setOnFinished(e -> game.loseLife());
+        void reset(double ms) {
+            //timer = new Rectangle(0, 0, 700, 40);
+            this.setFill(Color.GREEN);
 
-        transition.play();
+            if (scaleTransition != null) {
+                scaleTransition.stop();
+                this.setFill(Color.GREEN);
+                scaleTransition.setDuration(Duration.millis(ms));
+                scaleTransition.play();
+                return;
+            }
 
-        mainPane.setBottom(timerBar);
+            scaleTransition = new ScaleTransition(Duration.millis(ms), this);
+
+            scaleTransition.setFromX(1);
+            scaleTransition.setToX(0);
+            scaleTransition.setInterpolator(Interpolator.LINEAR);
+
+            if (!USE_GAME_INTERNAL_TIMER) {
+                scaleTransition.setOnFinished(e -> game.loseLife());
+            }
+
+            scaleTransition.play();
+        }
+
+        /**
+         * Speed up the timer when shift is held down
+         */
+        public void speedUp(boolean active) {
+            game.setTimerSpeed(active);
+            var time = scaleTransition.getCurrentTime();
+            var duration = scaleTransition.getDuration();
+            var atNormalSpeed = duration.equals(game.getTimerDelay());
+            if (active && atNormalSpeed) {
+                time = time.multiply(0.25);
+                duration = duration.multiply(0.25);
+            } else if (!active && !atNormalSpeed) {
+                duration = game.getTimerDelay();
+                time = time.multiply(4);
+            }
+            scaleTransition.stop();
+            scaleTransition.setDuration(duration);
+            scaleTransition.playFrom(time);
+        }
+
     }
 
     public void gameOver() {
         logger.info(Colour.red("Game Over"));
         Multimedia.stop(Category.MUSIC);
         //Multimedia.playSound("game_over.wav");
-        gameWindow.startMenu();
+        timer.scaleTransition.stop();
+        //gameWindow.startMenu();
+        gameWindow.startScores(game.getScore());
     }
 }

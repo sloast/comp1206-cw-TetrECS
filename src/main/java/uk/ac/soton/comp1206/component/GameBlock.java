@@ -334,7 +334,7 @@ public class GameBlock extends Canvas {
         scaleTransition.setFromY(1);
         scaleTransition.setToX(0);
         scaleTransition.setToY(0);
-        scaleTransition.setInterpolator(Interpolator.EASE_IN);
+        scaleTransition.setInterpolator(Interpolator.LINEAR);
 
         scaleTransition.setOnFinished(event -> parent.getChildren().remove(child));
 

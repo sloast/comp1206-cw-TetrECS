@@ -127,7 +127,7 @@ public class MenuScene extends BaseScene {
         var backgroundPane = new StackPane();
         backgroundPane.setMaxWidth(gameWindow.getWidth());
         backgroundPane.setMaxHeight(gameWindow.getHeight());
-        backgroundPane.getStyleClass().add("menu-background");
+        backgroundPane.getStyleClass().add("challenge-background");
         root.getChildren().add(backgroundPane);
 
         var menuPane = new StackPane();
@@ -153,7 +153,7 @@ public class MenuScene extends BaseScene {
         menuBox.getChildren().add(startSinglePlayer);
         mainPane.setCenter(menuBox);
         //Bind the button action to the startGame method in the menu
-        startSinglePlayer.setOnAction(this::startGame);
+
 
         var multiplayer = new Button("Multiplayer");
         multiplayer.getStyleClass().add("menuItem");
@@ -165,7 +165,7 @@ public class MenuScene extends BaseScene {
         menuBox.getChildren().add(instructions);
         mainPane.setCenter(menuBox);
 
-        instructions.setOnAction(this::startInstructions);
+
 
         var settings = new Button("Settings");
         settings.getStyleClass().add("menuItem");
@@ -177,6 +177,11 @@ public class MenuScene extends BaseScene {
         menuBox.getChildren().add(exit);
         mainPane.setCenter(menuBox);
 
+
+
+        startSinglePlayer.setOnAction(this::startGame);
+        instructions.setOnAction(this::startInstructions);
+        settings.setOnAction(e -> gameWindow.startScores());
         exit.setOnAction(e -> System.exit(0));
 
 
@@ -202,13 +207,14 @@ public class MenuScene extends BaseScene {
         TranslateTransition slideOn = new TranslateTransition(duration, node);
         slideOn.setFromY(gameWindow.getHeight());
         slideOn.setToY(0);
-        slideOn.setInterpolator(Interpolator.EASE_OUT);
+        slideOn.setInterpolator(Interpolator.LINEAR);
         slideOn.setDelay(Duration.millis(delay));
+        slideOn.setOnFinished(e -> Multimedia.playSound("hit1.wav"));
         slideOn.play();
     }
 
     public void animate(Node node, int delay) {
-        animate(node, delay, Duration.millis(400));
+        animate(node, delay, Duration.millis(500));
     }
 
     public void onKeyPress(KeyEvent keyEvent) {

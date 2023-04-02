@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -32,6 +34,7 @@ public class Game {
 
     private static final Logger logger = LogManager.getLogger(Game.class);
     public int MAX_LIVES = 3;
+    public static boolean USE_EXECUTOR_SERVICE = false;
 
     /**
      * Number of rows
@@ -73,6 +76,10 @@ public class Game {
     protected GameOverListener gameOverListener;
     protected GameLoopListener gameLoopListener;
 
+    Timer timer;
+    double startTime;
+    boolean timerFast = false;
+
     /**
      * Create a new game with the specified rows and columns. Creates a corresponding grid model.
      *
@@ -98,7 +105,7 @@ public class Game {
 
         running = true;
 
-        gameLoopListener.onGameLoop(getTimerDelayMs());
+        resetTimer();
         refreshPreview();
     }
 
@@ -116,7 +123,11 @@ public class Game {
         lives.set(lives.get() - 1);
         if (lives.get() <= 0) {
             onDied();
+        } else {
+            nextPiece();
+            resetTimer();
         }
+
     }
 
     /**
@@ -137,8 +148,56 @@ public class Game {
         //nextPieceBoard.setPiece(null);
 
         running = false;
+        if (timer != null) timer.cancel();
 
         gameOverListener.onGameOver();
+    }
+
+    public int getScore() {
+        return actualScore.get();
+    }
+
+    void resetTimer() {
+        gameLoopListener.onGameLoop(getTimerDelayMillis());
+
+        if (USE_EXECUTOR_SERVICE) {
+
+            if (timer != null) {
+                timer.cancel();
+            }
+
+            timer = new Timer();
+            var task = getTimerTask();
+
+            timer.schedule(task, getTimerDelayMillis());
+            startTime = System.currentTimeMillis();
+        }
+
+    }
+
+    private TimerTask getTimerTask() {
+        return new TimerTask() {
+            @Override
+            public void run() {
+                loseLife();
+            }
+        };
+    }
+
+    public void setTimerSpeed(boolean fast) {
+
+        if (fast != timerFast) {
+            if (timer == null) {
+                return;
+            }
+            double remainingTime = getTimerDelayMillis() - (System.currentTimeMillis() - startTime);
+            remainingTime *= fast ? 0.25 : 4;
+            timer.cancel();
+            timer = new Timer();
+            timer.schedule(getTimerTask(), (long) remainingTime);
+            timerFast = fast;
+        }
+
     }
 
     /**
@@ -161,6 +220,7 @@ public class Game {
             grid.playPiece(currentPiece, x, y);
             nextPiece();
             afterPiece();
+            resetTimer();
             refreshPreview();
         }
     }
@@ -457,7 +517,11 @@ public class Game {
         return running;
     }
 
-    public double getTimerDelayMs() {
+    public long getTimerDelayMillis() {
         return Math.max(2500, 12000 - 500 * level.get());
+    }
+
+    public Duration getTimerDelay() {
+        return Duration.millis(getTimerDelayMillis());
     }
 }

@@ -1,6 +1,8 @@
 package uk.ac.soton.comp1206.scene;
 
 import javafx.scene.Scene;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import uk.ac.soton.comp1206.ui.GamePane;
 import uk.ac.soton.comp1206.ui.GameWindow;
@@ -43,6 +45,21 @@ public abstract class BaseScene {
         scene.getStylesheets().add(getClass().getResource("/style/game.css").toExternalForm());
         this.scene = scene;
         return scene;
+    }
+
+    protected BorderPane mainPane(String styleClass) {
+        root = new GamePane(gameWindow.getWidth(), gameWindow.getHeight());
+
+        var stackPane = new StackPane();
+        stackPane.setMaxWidth(gameWindow.getWidth());
+        stackPane.setMaxHeight(gameWindow.getHeight());
+        stackPane.getStyleClass().add("challenge-background");
+        root.getChildren().add(stackPane);
+
+        var mainPane = new BorderPane();
+        stackPane.getChildren().add(mainPane);
+
+        return mainPane;
     }
 
     /**

@@ -39,20 +39,11 @@ public class InstructionsScene extends BaseScene {
     public void build() {
         logger.info("Building " + this.getClass().getName());
 
-        root = new GamePane(gameWindow.getWidth(),gameWindow.getHeight());
-
-        var backgroundPane = new StackPane();
-        backgroundPane.setMaxWidth(gameWindow.getWidth());
-        backgroundPane.setMaxHeight(gameWindow.getHeight());
-        backgroundPane.getStyleClass().add("menu-background");
-        root.getChildren().add(backgroundPane);
-
-        var instructionContainer = new BorderPane();
-        backgroundPane.getChildren().add(instructionContainer);
+        var mainPane = mainPane("menu-background");
 
         var instructions = new VBox();
         instructions.alignmentProperty().set(Pos.CENTER);
-        instructionContainer.setCenter(instructions);
+        mainPane.setCenter(instructions);
 
         var title = new Label("How to play:");
         title.getStyleClass().add("title");

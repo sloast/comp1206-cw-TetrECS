@@ -113,7 +113,7 @@ public class Communicator {
         try {
             ws.sendText(message);
         } catch (Exception e) {
-            logger.error(Colour.colour(e.getMessage(), TextColour.RED, TextMode.BOLD));
+            logger.error(Colour.error(e.getMessage()));
         }
 
     }
@@ -144,7 +144,12 @@ public class Communicator {
         logger.info("Received: " + message);
 
         for (CommunicationsListener handler : handlers) {
-            handler.receiveCommunication(message);
+            try {
+                handler.receiveCommunication(message);
+            } catch (Exception e) {
+                logger.error(Colour.error("Error in listener: " + e.getMessage()));
+                e.printStackTrace();
+            }
         }
     }
 
