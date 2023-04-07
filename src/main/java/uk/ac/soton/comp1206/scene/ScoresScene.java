@@ -30,9 +30,10 @@ import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import uk.ac.soton.comp1206.network.Communicator;
-import uk.ac.soton.comp1206.scene.ScoresScene.ScoresList.Score;
-import uk.ac.soton.comp1206.scene.ScoresScene.ScoresList.Score.ScoreType;
 import uk.ac.soton.comp1206.ui.GameWindow;
+import uk.ac.soton.comp1206.ui.ScoresList;
+import uk.ac.soton.comp1206.ui.ScoresList.Score;
+import uk.ac.soton.comp1206.ui.ScoresList.Score.ScoreType;
 import uk.ac.soton.comp1206.utils.Colour;
 
 public class ScoresScene extends BaseScene {
@@ -44,10 +45,10 @@ public class ScoresScene extends BaseScene {
 
     private boolean checkLastScore = false;
     private int newScore = 0;
-    private ScoresList onlineScores;
+    private HiScoresList onlineScores;
 
     private Score newScoreObj;
-    private ScoresList localScores;
+    private HiScoresList localScores;
 
     /**
      * Creates the scene, and checks if the last score is a high score
@@ -120,7 +121,7 @@ public class ScoresScene extends BaseScene {
         onlineScoresTitle.getStyleClass().add("title");
 
         onlineScoresContainer.getStyleClass().add("generic-box");
-        onlineScores = new ScoresList();
+        onlineScores = new HiScoresList();
         onlineScoresContainer.getChildren().addAll(onlineScoresTitle, onlineScores);
         onlineScoresContainer.setAlignment(Pos.TOP_CENTER);
         onlineScoresContainer.setSpacing(30);
@@ -161,13 +162,13 @@ public class ScoresScene extends BaseScene {
     /**
      * Loads the local scores from the file in {@code this.scoresPath}
      */
-    private ScoresList loadScores() {
+    private HiScoresList loadScores() {
         try {
             var scores = Files.lines(scoresPath).toList();
             if (scores.isEmpty()) {
-                return new ScoresList();
+                return new HiScoresList();
             } else {
-                return new ScoresList(scores);
+                return new HiScoresList(scores);
             }
         } catch (Exception e) {
             logger.error(Colour.red("Error reading scores file"));
@@ -180,7 +181,7 @@ public class ScoresScene extends BaseScene {
                 }
             }
 
-            return new ScoresList();
+            return new HiScoresList();
         }
     }
 
@@ -247,98 +248,10 @@ public class ScoresScene extends BaseScene {
      * Represents the lists of scores displayed in this scene Extends GridPane, so that the lines
      * can be aligned properly
      */
-    class ScoresList extends GridPane {
-
-        /**
-         * Represents a single score
-         */
-        static class Score {
-
-            Score(String username, int score, ScoreType type) {
-                this.username = username.replaceAll(":", "");
-                this.score = score;
-                this.type = type;
-                if (type == ScoreType.NEWSCORE) {
-                    this.usernameProperty = new SimpleStringProperty("");
-                }
-            }
-
-            Score(String username, int score) {
-                this.username = username;
-                this.score = score;
-            }
-
-            Score(String text) {
-                var split = text.split(" *: *");
-                this.username = split[0];
-                this.score = Integer.parseInt(split[1]);
-            }
-
-            String username;
-            int score;
-            Node[] nodes = new Node[3];
-
-            public enum ScoreType {
-                NORMAL, MYSCORE, NEWSCORE
-            }
-
-            ScoreType type = ScoreType.NORMAL;
-            StringProperty usernameProperty;
+    class HiScoresList extends ScoresList {
 
 
-            void animate(Duration delay) {
-                for (var node : nodes) {
-                    if (node == null) {
-                        return;
-                    }
-
-                    var duration = Duration.millis(500);
-
-                    node.setOpacity(0);
-                    //node.setTranslateX(-300);
-
-                    var translate = new TranslateTransition(duration, node);
-                    translate.setFromY(30);
-                    translate.setToY(0);
-
-                    var fade = new FadeTransition(duration, node);
-                    fade.setFromValue(0);
-                    fade.setToValue(1);
-
-                    translate.setDelay(delay);
-                    fade.setDelay(delay);
-
-                    translate.play();
-                    fade.play();
-                }
-            }
-
-            @Override
-            public String toString() {
-                return username + ":" + score;
-            }
-        }
-
-        public ListProperty<Score> scores;
-
-        public Comparator<Score> scoreComparator = (a, b) -> b.score - a.score;
-
-        private boolean frozen = true;
-        private static final int MAX_LIST_LENGTH = 10;
-
-        /**
-         * Loads scores from a list
-         *
-         * @param scores the scores to load, in text format
-         */
-        public void setAll(List<String> scores) {
-            this.scores.setAll(scores.stream().map(Score::new).toList());
-        }
-
-        /**
-         * Create a new {@code ScoresList} with placeholder scores
-         */
-        public ScoresList() {
+        public HiScoresList() {
             this(List.of(
                     "Player 1: 100",
                     "Player 2: 200",
@@ -353,66 +266,18 @@ public class ScoresScene extends BaseScene {
             ));
         }
 
-        /**
-         * Create a new {@code ScoresList} with the given scores
-         *
-         * @param scoresText the scores to load, each seperated by a newline.
-         */
-        public ScoresList(String scoresText) {
-            this(Arrays.asList(scoresText.split("\n")));
+        public HiScoresList(String scoresText) {
+            super(scoresText);
         }
 
-        /**
-         * Create a new {@code ScoresList} with the given scores
-         *
-         * @param scoresTextList the scores to load, in text format. Does not need to be sorted
-         */
-        public ScoresList(List<String> scoresTextList) {
-            super();
-            List<Score> scoresList = scoresTextList.stream()
-                    .map(Score::new)
-                    .collect(Collectors.toList());
-
-            scores = new SimpleListProperty<>(FXCollections.observableArrayList(scoresList));
-            scores.addListener((ob, ov, nv) -> rebuild());
-
-            ColumnConstraints usernameColumn = new ColumnConstraints();
-            usernameColumn.setHalignment(HPos.RIGHT);
-            //usernameColumn.setPercentWidth(50);
-            ColumnConstraints separatorColumn = new ColumnConstraints();
-
-            ColumnConstraints scoreColumn = new ColumnConstraints();
-            scoreColumn.setHalignment(HPos.RIGHT);
-            scoreColumn.setPercentWidth(30);
-
-            getColumnConstraints().addAll(usernameColumn, separatorColumn, scoreColumn);
-
-            getStyleClass().add("scores-list");
-
-            //rebuild();
-        }
-
-        /**
-         * Starts the animation to reveal the scores
-         */
-        public void reveal() {
-
-            frozen = false;
-            rebuild();
-
-            var sortedScores = scores.stream()
-                    .sorted(scoreComparator)
-                    .toList();
-
-            for (int i = 0; i < sortedScores.size(); i++) {
-                sortedScores.get(i).animate(Duration.millis(i * 100));
-            }
-
+        public HiScoresList(List<String> scores) {
+            super(scores);
         }
 
         /**
          * Rebuilds the scores list. Called whenever the scores list is modified.
          */
+        @Override
         public void rebuild() {
             if (frozen) {
                 return;
@@ -472,28 +337,6 @@ public class ScoresScene extends BaseScene {
             layout();
         }
 
-        /**
-         * Returns the highest score in the list. Uses {@code min()} because the comparator sorts in
-         * descending order.
-         */
-        Score max() {
-            return scores.stream()
-                    .sorted(scoreComparator)
-                    .limit(MAX_LIST_LENGTH)
-                    .min(scoreComparator)
-                    .orElseThrow();
-        }
-
-        /**
-         * Returns the lowest score in the list.
-         */
-        Score min() {
-            return scores.stream()
-                    .sorted(scoreComparator)
-                    .limit(MAX_LIST_LENGTH)
-                    .max(scoreComparator)
-                    .orElseThrow();
-        }
 
         /**
          * Saves the current list of scores to {@code scores.txt}.

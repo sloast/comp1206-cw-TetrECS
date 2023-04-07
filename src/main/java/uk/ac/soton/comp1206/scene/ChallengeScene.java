@@ -38,7 +38,7 @@ import uk.ac.soton.comp1206.utils.Vector2;
  */
 public class ChallengeScene extends BaseScene {
 
-    private static final Logger logger = LogManager.getLogger(ChallengeScene.class);
+    protected static final Logger logger = LogManager.getLogger(ChallengeScene.class);
     protected Game game;
     protected GameBoard board;
     protected VBox livesContainer;
@@ -282,7 +282,7 @@ public class ChallengeScene extends BaseScene {
 
     public void testingKeyBinds(KeyEvent event) {
         var keyCode = event.getCode();
-        logger.info(Colour.red("Debug key pressed: " + keyCode));
+        logger.info(Colour.orange("Debug key pressed: " + keyCode));
         switch (keyCode) {
             case NUMBER_SIGN -> game.resetBoard();
             case N -> game.nextPiece();
