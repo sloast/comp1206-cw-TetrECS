@@ -10,20 +10,28 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import uk.ac.soton.comp1206.App;
 import uk.ac.soton.comp1206.network.Communicator;
-import uk.ac.soton.comp1206.scene.*;
+import uk.ac.soton.comp1206.scene.BaseScene;
+import uk.ac.soton.comp1206.scene.ChallengeScene;
+import uk.ac.soton.comp1206.scene.InstructionsScene;
+import uk.ac.soton.comp1206.scene.LobbyScene;
+import uk.ac.soton.comp1206.scene.MenuScene;
+import uk.ac.soton.comp1206.scene.MultiplayerScene;
+import uk.ac.soton.comp1206.scene.ScoresScene;
+import uk.ac.soton.comp1206.scene.SplashScene;
 
 /**
- * The GameWindow is the single window for the game where everything takes place. To move between screens in the game,
- * we simply change the scene.
- *
- * The GameWindow has methods to launch each of the different parts of the game by switching scenes. You can add more
- * methods here to add more screens to the game.
+ * The GameWindow is the single window for the game where everything takes place. To move between
+ * screens in the game, we simply change the scene.
+ * <p>
+ * The GameWindow has methods to launch each of the different parts of the game by switching scenes.
+ * You can add more methods here to add more screens to the game.
  */
 public class GameWindow {
 
     private static final Logger logger = LogManager.getLogger(GameWindow.class);
 
     private static final boolean SHOW_SPLASH_SCREEN = false;
+    private static final boolean SHOW_EXIT_SPLASH = true;
 
     private final int width;
     private final int height;
@@ -37,8 +45,9 @@ public class GameWindow {
 
     /**
      * Create a new GameWindow attached to the given stage with the specified width and height
-     * @param stage stage
-     * @param width width
+     *
+     * @param stage  stage
+     * @param width  width
      * @param height height
      */
     public GameWindow(Stage stage, int width, int height) {
@@ -74,10 +83,10 @@ public class GameWindow {
         logger.info("Loading resources");
 
         //We need to load fonts here due to the Font loader bug with spaces in URLs in the CSS files
-        Font.loadFont(getClass().getResourceAsStream("/style/Orbitron-Regular.ttf"),32);
-        Font.loadFont(getClass().getResourceAsStream("/style/Orbitron-Bold.ttf"),32);
-        Font.loadFont(getClass().getResourceAsStream("/style/Orbitron-ExtraBold.ttf"),32);
-        Font.loadFont(getClass().getResourceAsStream("/style/manaspace.ttf"),32);
+        Font.loadFont(getClass().getResourceAsStream("/style/Orbitron-Regular.ttf"), 32);
+        Font.loadFont(getClass().getResourceAsStream("/style/Orbitron-Bold.ttf"), 32);
+        Font.loadFont(getClass().getResourceAsStream("/style/Orbitron-ExtraBold.ttf"), 32);
+        Font.loadFont(getClass().getResourceAsStream("/style/manaspace.ttf"), 32);
     }
 
     /**
@@ -90,15 +99,41 @@ public class GameWindow {
     /**
      * Display the single player challenge
      */
-    public void startChallenge() { loadScene(new ChallengeScene(this)); }
+    public void startChallenge() {
+        loadScene(new ChallengeScene(this));
+    }
 
-    public void startInstructions() { loadScene(new InstructionsScene(this)); }
+    public void startMultiplayerGame() {
+        loadScene(new MultiplayerScene(this));
+    }
 
-    public void startScores() { loadScene(new ScoresScene(this, 4567));}
-    public void startScores(int score) { loadScene(new ScoresScene(this, score));}
+    public void startLobby() {
+        loadScene(new LobbyScene(this));
+    }
+
+    public void startInstructions() {
+        loadScene(new InstructionsScene(this));
+    }
+
+    public void startScores() {
+        loadScene(new ScoresScene(this, 4567));
+    }
+
+    public void startScores(int score) {
+        loadScene(new ScoresScene(this, score));
+    }
+
+    public void exitGame() {
+        if (SHOW_EXIT_SPLASH && SHOW_SPLASH_SCREEN) {
+            loadScene(new SplashScene(this, true));
+        } else {
+            App.getInstance().shutdown();
+        }
+    }
 
     /**
-     * Setup the default settings for the stage itself (the window), such as the title and minimum width and height.
+     * Set up the default settings for the stage itself (the window), such as the title and minimum
+     * width and height.
      */
     public void setupStage() {
         stage.setTitle("TetrECS");
@@ -109,6 +144,7 @@ public class GameWindow {
 
     /**
      * Load a given scene which extends BaseScene and switch over.
+     *
      * @param newScene new scene to load
      */
     public void loadScene(BaseScene newScene) {
@@ -129,7 +165,7 @@ public class GameWindow {
      * Setup the default scene (an empty black scene) when no scene is loaded
      */
     public void setupDefaultScene() {
-        this.scene = new Scene(new Pane(),width,height, Color.BLACK);
+        this.scene = new Scene(new Pane(), width, height, Color.BLACK);
         stage.setScene(this.scene);
     }
 
@@ -143,6 +179,7 @@ public class GameWindow {
 
     /**
      * Get the current scene being displayed
+     *
      * @return scene
      */
     public Scene getScene() {
@@ -151,6 +188,7 @@ public class GameWindow {
 
     /**
      * Get the width of the Game Window
+     *
      * @return width
      */
     public int getWidth() {
@@ -159,6 +197,7 @@ public class GameWindow {
 
     /**
      * Get the height of the Game Window
+     *
      * @return height
      */
     public int getHeight() {
@@ -167,6 +206,7 @@ public class GameWindow {
 
     /**
      * Get the communicator
+     *
      * @return communicator
      */
     public Communicator getCommunicator() {

@@ -3,15 +3,12 @@ package uk.ac.soton.comp1206.scene;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import uk.ac.soton.comp1206.component.PieceBoard;
 import uk.ac.soton.comp1206.game.GamePiece;
-import uk.ac.soton.comp1206.ui.GamePane;
 import uk.ac.soton.comp1206.ui.GameWindow;
 import uk.ac.soton.comp1206.utils.Multimedia;
 
@@ -39,7 +36,7 @@ public class InstructionsScene extends BaseScene {
     public void build() {
         logger.info("Building " + this.getClass().getName());
 
-        var mainPane = mainPane("menu-background");
+        var mainPane = setupMain("menu-background");
 
         var instructions = new VBox();
         instructions.alignmentProperty().set(Pos.CENTER);

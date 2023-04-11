@@ -3,18 +3,8 @@ package uk.ac.soton.comp1206.scene;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
-import javafx.animation.FadeTransition;
-import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
-import javafx.beans.property.ListProperty;
-import javafx.beans.property.SimpleListProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
-import javafx.collections.FXCollections;
-import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -22,18 +12,15 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import uk.ac.soton.comp1206.network.Communicator;
 import uk.ac.soton.comp1206.ui.GameWindow;
-import uk.ac.soton.comp1206.ui.ScoresList;
-import uk.ac.soton.comp1206.ui.ScoresList.Score;
-import uk.ac.soton.comp1206.ui.ScoresList.Score.ScoreType;
+import uk.ac.soton.comp1206.component.ScoresList;
+import uk.ac.soton.comp1206.component.ScoresList.Score;
+import uk.ac.soton.comp1206.component.ScoresList.Score.ScoreType;
 import uk.ac.soton.comp1206.utils.Colour;
 
 public class ScoresScene extends BaseScene {
@@ -75,7 +62,7 @@ public class ScoresScene extends BaseScene {
     @Override
     public void build() {
 
-        BorderPane mainPane = mainPane("challenge-background");
+        BorderPane mainPane = setupMain("challenge-background");
 
         // Titles
         var header = new VBox();

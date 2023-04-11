@@ -14,4 +14,5 @@ module uk.ac.soton.comp1206 {
     exports uk.ac.soton.comp1206.component;
     exports uk.ac.soton.comp1206.game;
     exports uk.ac.soton.comp1206.utils;
+    opens uk.ac.soton.comp1206.component to javafx.fxml;
 }

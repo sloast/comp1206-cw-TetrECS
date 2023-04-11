@@ -1,5 +1,6 @@
 .gamepane {
     -fx-background-color: black;
+    -fx-font-family: 'manaspace';
 }
 
 .intro {
@@ -10,11 +11,14 @@
     -fx-border-color: #606060;
     -fx-border-width: 5;
     -fx-border-radius: 0;
-    -fx-background-color: rgba(59, 59, 59, 0.7);
+    -fx-background-color: rgba(59, 59, 59, 0.8);
     -fx-border-insets: 5;
     -fx-background-insets: 5;
     -fx-padding: 5;
+}
 
+Label {
+    -fx-border-style: hidden;
 }
 
 .menu-background {
@@ -33,25 +37,11 @@
     -fx-padding: 10;
 }
 
-.menuItem {
-    -fx-text-fill: white;
-    -fx-font-family: 'manaspace';
-    -fx-font-size: 32px;
-    -fx-background-color: none;
-    -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
-}
 
-.menuItem:hover {
-    -fx-text-fill: green;
-}
-
-.menuItem:selected {
-    -fx-text-fill: red;
-}
 
 .bigtitle {
     -fx-fill: yellow;
-    -fx-font-family: 'manaspace';
+    
     -fx-font-size: 64px;
     -fx-font-weight: 900;
     -fx-border-color: black;
@@ -61,15 +51,22 @@
 
 .title {
     -fx-text-fill: white;
-    -fx-font-family: 'manaspace';
+    
     -fx-font-size: 32px;
     -fx-underline: true;
     -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
 }
 
+.subtitle {
+    -fx-text-fill: grey;
+
+    -fx-font-size: 20px;
+    -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
+}
+
 .heading {
-    -fx-fill: white;
-    -fx-font-family: 'manaspace';
+    -fx-text-fill: white;
+    
     -fx-font-size: 20px;
     -fx-font-weight: 700;
     -fx-border-color: black;
@@ -79,14 +76,14 @@
 
 .score {
     -fx-text-fill: lime;
-    -fx-font-family: 'manaspace';
+    
     -fx-font-size: 36px;
     -fx-text-alignment: center;
 }
 
 .level {
     -fx-text-fill: red;
-    -fx-font-family: 'manaspace';
+    
     -fx-font-size: 24px;
     -fx-text-alignment: center;
     /*-fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);*/
@@ -94,21 +91,21 @@
 
 .regularlabel {
     -fx-text-fill: white;
-    -fx-font-family: 'manaspace';
+    
     -fx-font-size: 36px;
     -fx-text-alignment: center;
 }
 
 .smalllabel{
     -fx-text-fill: white;
-    -fx-font-family: 'manaspace';
+    
     -fx-font-size: 24px;
     -fx-text-alignment: center;
 }
 
 .hiscore {
     -fx-text-fill: orange;
-    -fx-font-family: 'manaspace';
+    
     -fx-font-size: 24px;
     -fx-font-weight: 700;
     -fx-text-alignment: center;
@@ -117,7 +114,7 @@
 
 .lives {
     -fx-text-fill: yellow;
-    -fx-font-family: 'manaspace';
+    
     -fx-font-size: 36px;
     -fx-font-weight: 700;
     -fx-border-color: black;
@@ -128,7 +125,7 @@
 
 .multiplier {
     -fx-text-fill: white;
-    -fx-font-family: 'manaspace';
+    
     -fx-font-size: 36px;
     -fx-text-alignment: center;
     -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
@@ -136,19 +133,19 @@
 
 .scores-list {
     -fx-font-size: 20px;
-    -fx-font-family: 'manaspace';
+    
     -fx-text-fill: white;
 }
 
 .scores-item {
     -fx-font-size: 26px;
-    -fx-font-family: 'manaspace';
+    
     -fx-text-fill: white;
 }
 
 .score-entry-box {
     -fx-font-size: 24px;
-    -fx-font-family: 'manaspace';
+    
     -fx-text-fill: white;
     -fx-padding: 2;
 }
@@ -173,15 +170,15 @@
 }
 
 .channelItem {
-    -fx-fill: white;
-    -fx-font-family: 'manaspace';
+    -fx-text-fill: white;
+    
     -fx-font-size: 16px;
     -fx-font-weight: 700;
     -fx-border-color: black;
     -fx-stroke: black;
 }
 .channelItem.selected {
-    -fx-fill: yellow;
+    -fx-text-fill: yellow;
 }
 
 .leaderboard {
@@ -206,11 +203,12 @@
 .messages {
     -fx-background-color: transparent;
     -fx-font-size: 12px;
-    -fx-font-family: 'manaspace';
+    -fx-text-fill: white;
+
 }
 
 .messages Text {
-    -fx-fill: white;
+    -fx-text-fill: white;
 }
 
 TextField {
@@ -221,9 +219,57 @@ TextField {
     -fx-prompt-text-fill: grey;
 }
 
+Button {
+    -fx-background-color: rgba(0,0,0,0.5);
+    -fx-text-fill: white;
+    -fx-border-color: white;
+    -fx-border-width: 2px;
+    -fx-border-radius: 0;
+}
+
+.sendButton {
+    -fx-text-fill: white;
+    -fx-border-color: white;
+}
+
+.startButton {
+    -fx-text-fill: #00ff66;
+    -fx-border-color: #00ff66;
+}
+
+.leaveButton {
+    -fx-text-fill: #ff0000;
+    -fx-border-color: #ff0000;
+}
+
+Button .disabled {
+    -fx-text-fill: grey;
+    -fx-border-color: grey;
+}
+
+.menuItem {
+    -fx-text-fill: white;
+    -fx-border-style: hidden;
+    -fx-font-size: 32px;
+    -fx-background-color: none;
+    -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
+}
+
+.menuItem:hover {
+    -fx-text-fill: green;
+}
+
+.menuItem.selected {
+    -fx-text-fill: #7dd50b;
+}
+
+.menuItem.selected:hover {
+    -fx-text-fill: green;
+}
+
 .playerBox {
     -fx-font-size: 14px;
-    -fx-font-family: 'manaspace';
+    
 }
 
 .playerBox Text {
@@ -236,7 +282,7 @@ TextField {
 
 .instructions {
     -fx-font-size: 10px;
-    -fx-font-family: 'manaspace';
+    
     -fx-fill: white;
 }
 

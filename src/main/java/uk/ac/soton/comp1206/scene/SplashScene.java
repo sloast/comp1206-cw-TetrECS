@@ -8,6 +8,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
+import uk.ac.soton.comp1206.App;
 import uk.ac.soton.comp1206.ui.GamePane;
 import uk.ac.soton.comp1206.ui.GameWindow;
 import uk.ac.soton.comp1206.utils.Multimedia;
@@ -17,6 +18,8 @@ import uk.ac.soton.comp1206.utils.Multimedia;
  */
 public class SplashScene extends BaseScene {
 
+    private boolean isExiting = false;
+
     /**
      * Create a new scene, passing in the GameWindow the scene will be displayed in
      *
@@ -24,6 +27,11 @@ public class SplashScene extends BaseScene {
      */
     public SplashScene(GameWindow gameWindow) {
         super(gameWindow);
+    }
+
+    public SplashScene(GameWindow gameWindow, boolean isExiting) {
+        super(gameWindow);
+        this.isExiting = isExiting;
     }
 
     @Override
@@ -62,15 +70,35 @@ public class SplashScene extends BaseScene {
         fadeAnim.setToValue(1);
         fadeAnim.setDelay(Duration.seconds(.5));
 
+
         var fadeOutAnim = new FadeTransition(Duration.seconds(1), splash);
         fadeOutAnim.setFromValue(1);
         fadeOutAnim.setToValue(0);
         fadeOutAnim.setDelay(Duration.seconds(1));
 
         fadeAnim.setOnFinished((e) -> fadeOutAnim.play());
-        fadeOutAnim.setOnFinished((e) -> gameWindow.startMenu());
 
-        scaleAnim.play();
+        if (isExiting) {
+
+            splash.setScaleX(0.75);
+            splash.setScaleY(0.75);
+
+            fadeAnim.setDelay(Duration.seconds(0));
+            fadeAnim.setDuration(Duration.seconds(0.5));
+            fadeOutAnim.setDelay(Duration.seconds(0));
+            fadeOutAnim.setDuration(Duration.seconds(0.5));
+
+            fadeOutAnim.setOnFinished((e) -> App.getInstance().shutdown());
+
+        } else {
+            fadeOutAnim.setOnFinished((e) -> gameWindow.startMenu());
+        }
+
+
+        if (!isExiting) {
+            scaleAnim.play();
+        }
+
         fadeAnim.play();
     }
 }

@@ -11,6 +11,7 @@ import javafx.scene.control.Alert;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import uk.ac.soton.comp1206.event.CommunicationsListener;
+import uk.ac.soton.comp1206.event.ListenerExpiredException;
 import uk.ac.soton.comp1206.utils.Colour;
 import uk.ac.soton.comp1206.utils.Colour.TextColour;
 import uk.ac.soton.comp1206.utils.Colour.TextMode;
@@ -47,7 +48,7 @@ public class Communicator {
             //Connect to the server
             ws = socketFactory.createSocket(server);
             ws.connect();
-            logger.info("Connected to " + server);
+            logger.info(Colour.green("Connected to " + server));
 
             //When a message is received, call the receive method
             ws.addListener(new WebSocketAdapter() {
@@ -108,7 +109,7 @@ public class Communicator {
      * @param message Message to send
      */
     public void send(String message) {
-        logger.info("Sending message: " + message);
+        logger.info("Sending message: " +Colour.yellow(Colour.italic( message)));
 
         try {
             ws.sendText(message);
@@ -141,16 +142,23 @@ public class Communicator {
      * @param message   the message that was received
      */
     private void receive(WebSocket websocket, String message) {
-        logger.info("Received: " + message);
+        logger.info("Received: " + Colour.yellow(message));
 
         for (CommunicationsListener handler : handlers) {
             try {
                 handler.receiveCommunication(message);
+            } catch (ListenerExpiredException f) {
+                removeListener(handler);
+                assert false;
             } catch (Exception e) {
                 logger.error(Colour.error("Error in listener: " + e.getMessage()));
                 e.printStackTrace();
             }
         }
+    }
+
+    public void removeListener(CommunicationsListener listener) {
+        this.handlers.remove(listener);
     }
 
 }

@@ -47,7 +47,7 @@ public abstract class BaseScene {
         return scene;
     }
 
-    protected BorderPane mainPane(String styleClass) {
+    protected BorderPane setupMain(String styleClass) {
         root = new GamePane(gameWindow.getWidth(), gameWindow.getHeight());
 
         var stackPane = new StackPane();

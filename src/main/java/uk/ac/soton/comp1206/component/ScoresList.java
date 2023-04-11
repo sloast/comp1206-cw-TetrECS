@@ -1,4 +1,4 @@
-package uk.ac.soton.comp1206.ui;
+package uk.ac.soton.comp1206.component;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -19,11 +19,11 @@ import javafx.scene.layout.GridPane;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import uk.ac.soton.comp1206.ui.ScoresList.Score.ScoreType;
+import uk.ac.soton.comp1206.component.ScoresList.Score.ScoreType;
 
 public class ScoresList extends GridPane {
 
-    private static Logger logger = LogManager.getLogger(ScoresList.class);
+    private static final Logger logger = LogManager.getLogger(ScoresList.class);
 
     /**
      * Represents a single score

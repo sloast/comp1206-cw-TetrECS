@@ -139,7 +139,7 @@ public class Colour {
      * @param v Value, between 0 and 1
      * @return the resulting hex string
      */
-    public static String hsv(float h, float s, float v) {
+    public static String hsv(double h, double s, double v) {
         var c = Color.hsb(h, s, v);
         return Colour.rgb(
                 (int) (c.getRed() * 255),

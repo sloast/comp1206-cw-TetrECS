@@ -72,7 +72,7 @@ public class ChallengeScene extends BaseScene {
 
         setupGame();
 
-        var mainPane = mainPane("challenge-background");
+        var mainPane = setupMain("challenge-background");
 
         board = new GameBoard(game.getGrid(),
                 gameWindow.getWidth() / 2.,

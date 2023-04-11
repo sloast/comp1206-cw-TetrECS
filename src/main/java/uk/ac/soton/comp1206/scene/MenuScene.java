@@ -1,5 +1,6 @@
 package uk.ac.soton.comp1206.scene;
 
+import java.util.List;
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
@@ -7,6 +8,7 @@ import javafx.animation.RotateTransition;
 import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -36,6 +38,10 @@ public class MenuScene extends BaseScene {
     private final BorderPane mainPane = new BorderPane();
     private final ImageView titleImg = new ImageView(Multimedia.getImage("TetrECS_small.png"));
     private final VBox titleBox = new VBox();
+    private final VBox menuBox = new VBox();
+    private List<Node> menuItems;
+    private int menuSize;
+    private int menuIndex = -1;
     private Text title;
 
     /**
@@ -143,48 +149,30 @@ public class MenuScene extends BaseScene {
 
         var titleImgContainer = makeTitleImg(mainPane);
 
-        var menuBox = new VBox();
+        //var menuBox = new VBox();
         menuBox.setSpacing(0);
         menuBox.setAlignment(Pos.CENTER);
         //menuBox.getStyleClass().add("menuItem");
-
-        var startSinglePlayer = new Button("Single Player");
-        startSinglePlayer.getStyleClass().add("menuItem");
-        menuBox.getChildren().add(startSinglePlayer);
-        mainPane.setCenter(menuBox);
-        //Bind the button action to the startGame method in the menu
-
-
-        var multiplayer = new Button("Multiplayer");
-        multiplayer.getStyleClass().add("menuItem");
-        menuBox.getChildren().add(multiplayer);
         mainPane.setCenter(menuBox);
 
-        var instructions = new Button("Instructions");
-        instructions.getStyleClass().add("menuItem");
-        menuBox.getChildren().add(instructions);
-        mainPane.setCenter(menuBox);
+        menuItems = menuBox.getChildren();
 
+        var startSinglePlayer = new MenuItem("Single Player", this::startGame);
+        menuItems.add(startSinglePlayer);
 
+        var multiplayer = new MenuItem("Multiplayer", e -> gameWindow.startLobby());
+        menuItems.add(multiplayer);
 
-        var settings = new Button("Settings");
-        settings.getStyleClass().add("menuItem");
-        menuBox.getChildren().add(settings);
-        mainPane.setCenter(menuBox);
+        var instructions = new MenuItem("Instructions", this::startInstructions);
+        menuItems.add(instructions);
 
-        var exit = new Button("Exit");
-        exit.getStyleClass().add("menuItem");
-        menuBox.getChildren().add(exit);
-        mainPane.setCenter(menuBox);
+        var settings = new MenuItem("Settings", e -> gameWindow.startScores());
+        menuItems.add(settings);
 
+        var exit = new MenuItem("Exit", e -> gameWindow.exitGame());
+        menuItems.add(exit);
 
-
-        startSinglePlayer.setOnAction(this::startGame);
-        instructions.setOnAction(this::startInstructions);
-        settings.setOnAction(e -> gameWindow.startScores());
-        exit.setOnAction(e -> System.exit(0));
-
-
+        menuSize = menuItems.size();
 
         backgroundPane.opacityProperty().set(0);
         var backgroundFade = new FadeTransition(Duration.millis(1000), backgroundPane);
@@ -221,8 +209,53 @@ public class MenuScene extends BaseScene {
         var keyCode = keyEvent.getCode();
         logger.info("Key pressed: " + keyCode);
         switch (keyCode) {
-            case ESCAPE -> System.exit(0);
+            case ESCAPE -> gameWindow.exitGame();
         }
+    }
+
+    public void onArrowPress(KeyEvent keyEvent) {
+        var keyCode = keyEvent.getCode();
+        logger.info("Key pressed: " + keyCode);
+        switch (keyCode) {
+            case UP -> selectMenuItem(-1);
+            case DOWN -> selectMenuItem(1);
+            default -> {
+                return;
+            }
+        }
+        Multimedia.playSound("hit1.wav");
+        keyEvent.consume();
+    }
+
+    private void selectMenuItem(int direction) {
+        if (menuIndex == -1) {
+            menuIndex = 0;
+            var selected = menuItems.get(menuIndex);
+            ((MenuItem) selected).setSelected(true);
+            return;
+        }
+
+        var selected = menuItems.get(menuIndex);
+        ((MenuItem) selected).setSelected(false);
+        menuIndex += direction;
+        if (menuIndex < 0) {
+            menuIndex = menuSize - 1;
+        } else if (menuIndex >= menuSize) {
+            menuIndex = 0;
+        }
+        selected = menuItems.get(menuIndex);
+        ((MenuItem) selected).setSelected(true);
+    }
+
+    private void clearSelection() {
+        if (menuIndex == -1) {
+            return;
+        }
+        var selected = menuItems.get(menuIndex);
+        ((MenuItem) selected).setSelected(false);
+
+        // should it reset back to the top?
+        //menuIndex = -1;
     }
 
     /**
@@ -231,6 +264,7 @@ public class MenuScene extends BaseScene {
     @Override
     public void initialise() {
         scene.setOnKeyPressed(this::onKeyPress);
+        scene.addEventFilter(KeyEvent.KEY_PRESSED, this::onArrowPress);
     }
 
     /**
@@ -246,4 +280,24 @@ public class MenuScene extends BaseScene {
         gameWindow.startInstructions();
     }
 
+    public class MenuItem extends Button {
+
+        public MenuItem(String name, EventHandler<ActionEvent> eventHandler) {
+            super(name);
+            getStyleClass().add("menuItem");
+            setOnAction(eventHandler);
+
+            //clear keyboard selection when hovered
+            setOnMouseEntered(e -> MenuScene.this.clearSelection());
+        }
+
+        public void setSelected(boolean focused) {
+            if (focused) {
+                getStyleClass().add("selected");
+                requestFocus();
+            } else {
+                getStyleClass().remove("selected");
+            }
+        }
+    }
 }

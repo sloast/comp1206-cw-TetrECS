@@ -194,4 +194,15 @@ public class Grid {
             }
         }
     }
+
+    public String toString() {
+        var sb = new StringBuilder("BOARD");
+        for (var x = 0; x < rows; x++) {
+            for (var y = 0; y < cols; y++) {
+                sb.append(" ").append(get(x, y));
+            }
+        }
+
+        return sb.toString();
+    }
 }
