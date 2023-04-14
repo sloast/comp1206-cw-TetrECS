@@ -48,6 +48,10 @@ public class ScoresList extends GridPane {
             var split = text.split(" *: *");
             this.username = split[0];
             this.score = Integer.parseInt(split[1]);
+            if (this.username.startsWith("%MYSCORE%")) {
+                this.username = this.username.substring(9);
+                this.type = ScoreType.MYSCORE;
+            }
         }
 
         public String username;
@@ -55,7 +59,7 @@ public class ScoresList extends GridPane {
         public Node[] nodes = new Node[3];
 
         public enum ScoreType {
-            NORMAL, MYSCORE, NEWSCORE
+            NORMAL, MYSCORE, NEWSCORE, DIED
         }
 
         public ScoreType type = ScoreType.NORMAL;
@@ -215,6 +219,12 @@ public class ScoresList extends GridPane {
                 username.getStyleClass().add("my-score");
                 separator.getStyleClass().add("my-score");
                 scoreLabel.getStyleClass().add("my-score");
+            }
+
+            if (score.type == ScoreType.DIED) {
+                username.getStyleClass().add("dead-score");
+                separator.getStyleClass().add("dead-score");
+                scoreLabel.getStyleClass().add("dead-score");
             }
 
             score.nodes = new Node[]{username, separator, scoreLabel};

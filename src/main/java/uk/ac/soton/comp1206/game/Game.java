@@ -33,52 +33,40 @@ import uk.ac.soton.comp1206.utils.Vector2;
 public class Game {
 
     private static final Logger logger = LogManager.getLogger(Game.class);
-    public int MAX_LIVES = 3;
     public static boolean USE_EXECUTOR_SERVICE = false;
-
     /**
      * Number of rows
      */
-    protected final int rows;
-
+    final int rows;
     /**
      * Number of columns
      */
-    protected final int cols;
-
+    final int cols;
     /**
      * The grid model linked to the game
      */
-    protected final Grid grid;
-
-    private boolean running = false;
-
-    public boolean usingKeyboard = false;
-
-    private GamePiece currentPiece = null;
-    private GamePiece nextPiece = null;
-
+    final Grid grid;
     private final Random random = new Random();
-
+    public int MAX_LIVES = 3;
+    public boolean usingKeyboard = false;
     public GameBlock hoveredBlock = null;
     public GameBlock lastHoveredBlock = null;
-
-    private Queue<Integer> pieceQueue = new LinkedList<>();
-
     public IntegerProperty displayedScore = new SimpleIntegerProperty(1);
-    protected IntegerProperty actualScore = new SimpleIntegerProperty(0);
     public IntegerProperty lives = new SimpleIntegerProperty(3);
     public IntegerProperty level = new SimpleIntegerProperty(0);
     public IntegerProperty multiplier = new SimpleIntegerProperty(1);
-
+    protected IntegerProperty actualScore = new SimpleIntegerProperty(0);
     protected NextPieceListener nextPieceListener;
     protected LineClearedListener lineClearedListener;
     protected GameOverListener gameOverListener;
     protected GameLoopListener gameLoopListener;
-
+    boolean running = false;
+    GamePiece currentPiece = null;
+    GamePiece nextPiece = null;
     Timer timer;
     double startTime;
     boolean timerFast = false;
+    private Queue<Integer> pieceQueue = new LinkedList<>();
 
     /**
      * Create a new game with the specified rows and columns. Creates a corresponding grid model.
@@ -148,7 +136,9 @@ public class Game {
         //nextPieceBoard.setPiece(null);
 
         running = false;
-        if (timer != null) timer.cancel();
+        if (timer != null) {
+            timer.cancel();
+        }
 
         gameOverListener.onGameOver();
     }
@@ -279,7 +269,7 @@ public class Game {
         refreshPreview();
     }
 
-    private void refreshPreview() {
+    void refreshPreview() {
         if (!running) {
             return;
         }
@@ -300,7 +290,7 @@ public class Game {
         grid.previewPiece(currentPiece, gameBlock.getX(), gameBlock.getY(), valid);
     }
 
-    private void afterPiece() {
+    void afterPiece() {
         int clearedRows = 0;
         var clearedBlocks = new HashSet<Vector2>();
 
@@ -484,7 +474,8 @@ public class Game {
             ));
             anim.play();
 
-            logger.info(Colour.green("Scored {} points"), linesCleared * blocksCleared * 10 * multiplier.get());
+            logger.info(Colour.green("Scored {} points"),
+                    linesCleared * blocksCleared * 10 * multiplier.get());
         } else {
             multiplier.set(1);
         }

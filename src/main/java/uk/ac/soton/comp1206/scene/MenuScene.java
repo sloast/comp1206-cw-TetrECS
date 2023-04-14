@@ -1,12 +1,14 @@
 package uk.ac.soton.comp1206.scene;
 
 import java.util.List;
+import java.util.UUID;
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.RotateTransition;
 import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -166,7 +168,8 @@ public class MenuScene extends BaseScene {
         var instructions = new MenuItem("Instructions", this::startInstructions);
         menuItems.add(instructions);
 
-        var settings = new MenuItem("Settings", e -> gameWindow.startScores());
+        var settings = new MenuItem("Settings", null);
+        settings.setOnAction(e -> settings.setText("Coming soon"));
         menuItems.add(settings);
 
         var exit = new MenuItem("Exit", e -> gameWindow.exitGame());
@@ -210,12 +213,34 @@ public class MenuScene extends BaseScene {
         logger.info("Key pressed: " + keyCode);
         switch (keyCode) {
             case ESCAPE -> gameWindow.exitGame();
+            case S -> gameWindow.startScores();
+            case M -> {
+                var communicator = gameWindow.getCommunicator();
+                communicator.send("PART");
+                communicator.send("CREATE " + UUID.randomUUID());
+                //communicator.send("NICK " + "MyPlayer");
+                communicator.send("NICK " + UUID.randomUUID());
+                communicator.send("START");
+                communicator.addListener((m) -> {
+                    if (m.equals("START")) Platform.runLater(gameWindow::startMultiplayerGame);
+                });
+            }
+            case J -> {
+                var communicator = gameWindow.getCommunicator();
+                communicator.send("PART");
+                communicator.send("JOIN " + "a8d485f084bc984");
+                communicator.send("NICK " + "MyPlayer");
+                communicator.addListener((m) -> {
+                    if (m.equals("START")) Platform.runLater(gameWindow::startMultiplayerGame);
+                });
+            }
+            case L -> gameWindow.startLobby();
         }
     }
 
     public void onArrowPress(KeyEvent keyEvent) {
         var keyCode = keyEvent.getCode();
-        logger.info("Key pressed: " + keyCode);
+        //logger.info("Key pressed: " + keyCode);
         switch (keyCode) {
             case UP -> selectMenuItem(-1);
             case DOWN -> selectMenuItem(1);

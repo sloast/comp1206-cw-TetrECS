@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import javafx.animation.RotateTransition;
@@ -13,6 +15,7 @@ import javafx.beans.property.StringProperty;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -38,6 +41,8 @@ import uk.ac.soton.comp1206.utils.Colour;
 public class LobbyScene extends BaseScene {
 
     private static Logger logger = LogManager.getLogger(LobbyScene.class);
+
+    private static final boolean ALLOW_JOIN_BLANK = true;
 
     private final double chatWidth = (double) gameWindow.getWidth() / 3 * 2;
     private final Communicator communicator;
@@ -137,6 +142,9 @@ public class LobbyScene extends BaseScene {
 
             String[] channels = message.split("\n");
             for (String ch : channels) {
+                if (ch.isBlank()) {
+                    continue;
+                }
                 Label channel = new Label(ch);
                 channel.getStyleClass().add("channelItem");
                 if (ch.equals(currentChannel)) {
@@ -434,6 +442,8 @@ public class LobbyScene extends BaseScene {
         }
 
         public void addMessage(Message message) {
+            logger.info("Adding message: " + message);
+
             int row = messages.size();
             messages.add(message);
 
@@ -458,15 +468,19 @@ public class LobbyScene extends BaseScene {
 
             if (!Platform.isFxApplicationThread()) {
                 Platform.runLater(() -> {
-
-                    messageGrid.add(username, 0, row);
-                    messageGrid.add(separator, 1, row);
-                    messageGrid.add(content, 2, row);
-                    messageGrid.add(timeStamp, 3, row);
-                    logger.info("Added message: " + message.content);
-
+                    addRow(username, separator, content, timeStamp);
                     jumpToBottom();
                 });
+            } else {
+                addRow(username, separator, content, timeStamp);
+                jumpToBottom();
+            }
+        }
+
+        private void addRow(Node... nodes) {
+            int row = messageGrid.getRowCount();
+            for (int i = 0; i < nodes.length; i++) {
+                messageGrid.add(nodes[i], i, row);
             }
         }
 
@@ -519,19 +533,30 @@ public class LobbyScene extends BaseScene {
             switch (command) {
                 case "nick" -> {
                     if (argument == null) {
-                        chatWindow.addSystemMessage("Nicknames",
+                        addSystemMessage("Nicknames",
                                 "Usage: /nick <name>, sets your nick");
                     } else {
+                        if (argument.equals("/random")) argument = UUID.randomUUID().toString();
                         communicator.send("NICK " + argument);
                     }
                 }
                 case "join" -> {
-                    if (argument == null) {
-                        chatWindow.addSystemMessage("Channels",
+                    if (argument == null && !ALLOW_JOIN_BLANK) {
+                        addSystemMessage("Channels",
                                 "Usage: /join <channel>, joins a channel");
                     } else {
                         if (currentChannel != null) {
                             communicator.send("PART");
+                        }
+                        if (argument == null || argument.equals("/random")) {
+                            if (channelList.getChildren().size() == 0) {
+                                addSystemMessage("Channels",
+                                        "No channels available, create one with /create");
+                                return;
+                            }
+                            logger.info(channelList.getChildren().size());
+                            argument = ((Label)channelList.getChildren().get(
+                                new Random().nextInt(channelList.getChildren().size()))).getText();
                         }
                         communicator.send("JOIN " + argument);
                     }
@@ -540,12 +565,13 @@ public class LobbyScene extends BaseScene {
                 case "quit", "exit" -> LobbyScene.this.exit();
                 case "create" -> {
                     if (argument == null) {
-                        chatWindow.addSystemMessage("Channels",
+                        addSystemMessage("Channels",
                                 "Usage: /create <channel>, creates a channel");
                     } else {
                         if (currentChannel != null) {
                             communicator.send("PART");
                         }
+                        if (argument.equals("/random")) argument = UUID.randomUUID().toString();
                         communicator.send("CREATE " + argument);
                     }
                 }
@@ -565,7 +591,7 @@ public class LobbyScene extends BaseScene {
                     messageGrid.getChildren().clear();
                     messages.clear();
                 }
-                default -> chatWindow.addSystemMessage("Unknown command /" + command);
+                default -> addSystemMessage("Unknown command /" + command);
             }
         }
 

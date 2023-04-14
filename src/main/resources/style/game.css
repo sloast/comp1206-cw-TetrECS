@@ -1,5 +1,6 @@
 .gamepane {
     -fx-background-color: black;
+    -fx-text-fill: white;
     -fx-font-family: 'manaspace';
 }
 
@@ -158,8 +159,9 @@ Label {
     -fx-text-fill: yellow;
 }
 
-.deadscore {
+.dead-score {
     -fx-strikethrough: true;
+    -fx-text-fill: #a6a5a5;
 }
 
 .points {

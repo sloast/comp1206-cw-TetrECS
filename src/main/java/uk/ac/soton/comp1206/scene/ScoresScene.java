@@ -37,6 +37,16 @@ public class ScoresScene extends BaseScene {
     private Score newScoreObj;
     private HiScoresList localScores;
 
+    private boolean fromMultiplayer = false;
+    private ScoresList multiplayerScores;
+
+    public ScoresScene(GameWindow gameWindow, int score, ScoresList leaderboard) {
+        this(gameWindow, score);
+        fromMultiplayer = true;
+        multiplayerScores = leaderboard;
+        checkLastScore = false;
+    }
+
     /**
      * Creates the scene, and checks if the last score is a high score
      *
@@ -78,7 +88,7 @@ public class ScoresScene extends BaseScene {
 
         // "High Scores" text
         var titleBox = new HBox();
-        var title = new Label("HIGH SCORES");
+        var title = new Label("YOUR SCORE: " + newScore);
         titleBox.getChildren().add(title);
         title.getStyleClass().add("title");
         //title.alignmentProperty().set(Pos.CENTER);
@@ -91,16 +101,36 @@ public class ScoresScene extends BaseScene {
         // Contains the two score lists
         var scoresContainer = new HBox();
 
-        var localScoresContainer = new VBox();
-        var localScoresTitle = new Label("LOCAL SCORES");
-        localScoresTitle.getStyleClass().add("title");
+        if (!fromMultiplayer) {
 
-        localScoresContainer.getStyleClass().add("generic-box");
-        localScores = loadScores();
-        localScoresContainer.getChildren().addAll(localScoresTitle, localScores);
-        localScoresContainer.setAlignment(Pos.TOP_CENTER);
-        //localScoresContainer.setPadding(new Insets(20,0,0,0));
-        localScoresContainer.setSpacing(30);
+            var localScoresContainer = new VBox();
+            var localScoresTitle = new Label("LOCAL SCORES");
+            localScoresTitle.getStyleClass().add("title");
+
+            localScoresContainer.getStyleClass().add("generic-box");
+            localScores = loadScores();
+            localScoresContainer.getChildren().addAll(localScoresTitle, localScores);
+            localScoresContainer.setAlignment(Pos.TOP_CENTER);
+            //localScoresContainer.setPadding(new Insets(20,0,0,0));
+            localScoresContainer.setSpacing(30);
+
+            scoresContainer.getChildren().add(localScoresContainer);
+
+        } else {
+            var thisGameScoresContainer = new VBox();
+            var thisGameScoresLabel = new Label("THIS GAME");
+            thisGameScoresLabel.getStyleClass().add("title");
+
+            thisGameScoresContainer.getStyleClass().add("generic-box");
+            localScores = new HiScoresList();
+            multiplayerScores.setMaxWidth(Double.MAX_VALUE);
+            thisGameScoresContainer.getChildren().addAll(thisGameScoresLabel, multiplayerScores);
+            thisGameScoresContainer.setAlignment(Pos.TOP_CENTER);
+            //localScoresContainer.setPadding(new Insets(20,0,0,0));
+            thisGameScoresContainer.setSpacing(30);
+
+            scoresContainer.getChildren().add(thisGameScoresContainer);
+        }
 
         var onlineScoresContainer = new VBox();
 
@@ -113,12 +143,18 @@ public class ScoresScene extends BaseScene {
         onlineScoresContainer.setAlignment(Pos.TOP_CENTER);
         onlineScoresContainer.setSpacing(30);
 
-        scoresContainer.getChildren().addAll(localScoresContainer, onlineScoresContainer);
+        scoresContainer.getChildren().add(onlineScoresContainer);
         scoresContainer.setPrefWidth(800);
 
         // make each list the same width
         localScores.setPrefWidth(scoresContainer.getPrefWidth() / 2);
         onlineScores.setPrefWidth(scoresContainer.getPrefWidth() / 2);
+
+        if (fromMultiplayer) {
+            multiplayerScores.setPrefWidth(scoresContainer.getPrefWidth() / 2);
+            multiplayerScores.setScaleX(1);
+            multiplayerScores.setScaleY(1);
+        }
 
         mainPane.setCenter(scoresContainer);
 

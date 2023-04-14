@@ -1,9 +1,14 @@
 package uk.ac.soton.comp1206.scene;
 
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
 import javafx.animation.ScaleTransition;
+import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -38,19 +43,16 @@ import uk.ac.soton.comp1206.utils.Vector2;
  */
 public class ChallengeScene extends BaseScene {
 
-    protected static final Logger logger = LogManager.getLogger(ChallengeScene.class);
-    protected Game game;
-    protected GameBoard board;
-    protected VBox livesContainer;
-
+    public static final boolean USE_GAME_INTERNAL_TIMER = false;
+    private static final Logger logger = LogManager.getLogger(ChallengeScene.class);
     public PieceBoard currentPieceBoard;
     public PieceBoard nextPieceBoard;
-
     public ScheduledExecutorService gameTimer;
-    public static final boolean USE_GAME_INTERNAL_TIMER = false;
-
     public BorderPane mainPane;
-    private GameTimer timer;
+    Game game;
+    GameBoard board;
+    VBox livesContainer;
+    GameTimer timer;
 
 
     /**
@@ -72,10 +74,9 @@ public class ChallengeScene extends BaseScene {
 
         setupGame();
 
-        var mainPane = setupMain("challenge-background");
+        mainPane = setupMain("challenge-background");
 
-        board = new GameBoard(game.getGrid(),
-                gameWindow.getWidth() / 2.,
+        board = new GameBoard(game.getGrid(), gameWindow.getWidth() / 2.,
                 gameWindow.getWidth() / 2.);
         mainPane.setCenter(board);
 
@@ -169,33 +170,6 @@ public class ChallengeScene extends BaseScene {
         mainPane.setBottom(timerContainer);
         HBox.setMargin(timer, new Insets(20, 0, 20, 0));
 
-        // Set up event listeners
-        game.setOnLineCleared(s -> board.lineCleared(s, mainPane));
-        game.setOnNextPiece((nextPiece, followingPiece) -> {
-            this.currentPieceBoard.setPiece(nextPiece);
-            this.nextPieceBoard.setPiece(followingPiece);
-        });
-        game.setOnGameOver(this::gameOver);
-        game.setOnGameLoop(timer::reset);
-
-        //Handle block on gameboard grid being clicked
-        board.setOnBlockClick(this::blockClicked);
-        board.setOnBlockHoverEnter(this::blockHoverEnter);
-        board.setOnBlockHoverExit(this::blockHoverExit);
-        board.setOnRightClick(this::rotateCurrentPiece);
-
-        currentPieceBoard.setOnRightClick(this::rotateCurrentPiece);
-        currentPieceBoard.setOnBlockClick(this::rotateCurrentPiece);
-        nextPieceBoard.setOnBlockClick(this::swapCurrentPiece);
-        nextPieceBoard.setOnRightClick(this::swapCurrentPiece);
-
-        mainPane.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
-            if (e.getButton() == MouseButton.SECONDARY) {
-                game.rotateCurrentPiece();
-                logger.info(Colour.orange("Intercepted right click"));
-                e.consume();
-            }
-        });
     }
 
     /**
@@ -241,8 +215,37 @@ public class ChallengeScene extends BaseScene {
     public void initialise() {
         logger.info(Colour.cyan("Initialising Challenge"));
 
+        // Set up event listeners
+        game.setOnLineCleared(s -> board.lineCleared(s, mainPane));
+        game.setOnNextPiece((nextPiece, followingPiece) -> {
+            this.currentPieceBoard.setPiece(nextPiece);
+            this.nextPieceBoard.setPiece(followingPiece);
+        });
+        game.setOnGameOver(this::gameOver);
+        game.setOnGameLoop(timer::reset);
+
+        mainPane.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+            if (e.getButton() == MouseButton.SECONDARY) {
+                game.rotateCurrentPiece();
+                logger.info(Colour.orange("Intercepted right click"));
+                e.consume();
+            }
+        });
+
         scene.setOnKeyPressed(this::onKeyPress);
         game.lives.addListener(this::onLifeChange);
+
+        // Handle block on GameBoard grid being clicked
+        board.setOnBlockClick(this::blockClicked);
+        board.setOnBlockHoverEnter(this::blockHoverEnter);
+        board.setOnBlockHoverExit(this::blockHoverExit);
+        board.setOnRightClick(this::rotateCurrentPiece);
+
+        // Handle PieceBoard being clicked
+        currentPieceBoard.setOnRightClick(this::rotateCurrentPiece);
+        currentPieceBoard.setOnBlockClick(this::rotateCurrentPiece);
+        nextPieceBoard.setOnBlockClick(this::swapCurrentPiece);
+        nextPieceBoard.setOnRightClick(this::swapCurrentPiece);
 
         Multimedia.startMusicIntro("game_start.wav", "game.wav");
         Multimedia.musicVolume.set(0);
@@ -291,18 +294,17 @@ public class ChallengeScene extends BaseScene {
         }
     }
 
-    void onLifeChange(ObservableValue<? extends Number> observableValue,
-            Number oldValue, Number newValue) {
-        logger.info(Colour.purple(
-                "Lives changed from " + oldValue + " to " + newValue));
+    void onLifeChange(ObservableValue<? extends Number> observableValue, Number oldValue,
+            Number newValue) {
+        logger.info(Colour.purple("Lives changed from " + oldValue + " to " + newValue));
         int max = game.MAX_LIVES;
         for (int i = 0; i < max; i++) {
             if (i < newValue.intValue()) {
-                ((ImageView) livesContainer.getChildren().get(max - i - 1))
-                        .setImage(Multimedia.getImage("heart_small.png", 80));
+                ((ImageView) livesContainer.getChildren().get(max - i - 1)).setImage(
+                        Multimedia.getImage("heart_small.png", 80));
             } else {
-                ((ImageView) livesContainer.getChildren().get(max - i - 1))
-                        .setImage(Multimedia.getImage("heart_small_empty.png", 80));
+                ((ImageView) livesContainer.getChildren().get(max - i - 1)).setImage(
+                        Multimedia.getImage("heart_small_empty.png", 80));
             }
         }
     }
@@ -321,15 +323,26 @@ public class ChallengeScene extends BaseScene {
             pos.x = hoveredBlock.getX();
             pos.y = hoveredBlock.getY();
 
-            pos = pos.add(direction).clamp(
-                    Vector2.zero(),
-                    new Vector2(game.getCols() - 1, game.getRows() - 1)
-            );
+            pos = pos.add(direction)
+                    .clamp(Vector2.zero(), new Vector2(game.getCols() - 1, game.getRows() - 1));
         }
 
         hoveredBlock = board.getBlock(pos.x, pos.y);
 
         game.hoverBlockKeyboard(hoveredBlock);
+    }
+
+    public void gameOver() {
+        logger.info(Colour.red("Game Over"));
+        Multimedia.stop(Category.MUSIC);
+        //Multimedia.playSound("game_over.wav");
+        timer.scaleTransition.stop();
+        //gameWindow.startMenu();
+        startScores();
+    }
+
+    void startScores() {
+        gameWindow.startScores(game.getScore());
     }
 
     /**
@@ -338,10 +351,8 @@ public class ChallengeScene extends BaseScene {
     public class GameTimer extends Rectangle {
 
         private ScaleTransition scaleTransition;
-        private KeyFrame orangeKeyFrame = new KeyFrame(Duration.millis(1000),
-                e -> this.setFill(Color.ORANGE));
-        private KeyFrame redKeyFrame = new KeyFrame(Duration.millis(500),
-                e -> this.setFill(Color.RED));
+        private int colorStage = 2;
+        private Timeline colorAnimation;
 
         public GameTimer(double x, double y, double width, double height) {
             super(x, y, width, height);
@@ -350,7 +361,15 @@ public class ChallengeScene extends BaseScene {
 
         void reset(double ms) {
             //timer = new Rectangle(0, 0, 700, 40);
+            if (colorAnimation != null) {
+                colorAnimation.stop();
+            }
+            Platform.runLater(() -> {
+                this.setFill(Color.GREEN);
+                this.setScaleX(1);
+            });
             this.setFill(Color.GREEN);
+            colorStage = 2;
 
             if (scaleTransition != null) {
                 scaleTransition.stop();
@@ -371,7 +390,36 @@ public class ChallengeScene extends BaseScene {
             }
 
             scaleTransition.play();
+
+            // simplest way to make this work
+            ScheduledExecutorService checkColor = Executors.newSingleThreadScheduledExecutor();
+            checkColor.scheduleAtFixedRate(() -> {
+                if (colorStage == 2 && getProportionComplete() > 0.5) {
+                    animateColour(Color.YELLOW);
+                    colorStage = 1;
+                } else if (colorStage == 1 && getProportionComplete() > 0.75) {
+                    animateColour(Color.RED);
+                    colorStage = 0;
+                }
+            }, 100, 100, TimeUnit.MILLISECONDS);
         }
+
+        private void animateColour(Color endColor) {
+            if (colorAnimation != null) {
+                colorAnimation.stop();
+            }
+            colorAnimation = new Timeline(
+                    new KeyFrame(Duration.millis(scaleTransition.getDuration().toMillis() / 5),
+                            new KeyValue(this.fillProperty(), endColor)));
+            colorAnimation.play();
+        }
+
+        private double getProportionComplete() {
+            var time = scaleTransition.getCurrentTime();
+            var duration = scaleTransition.getDuration();
+            return time.toMillis() / duration.toMillis();
+        }
+
 
         /**
          * Speed up the timer when shift is held down
@@ -393,14 +441,5 @@ public class ChallengeScene extends BaseScene {
             scaleTransition.playFrom(time);
         }
 
-    }
-
-    public void gameOver() {
-        logger.info(Colour.red("Game Over"));
-        Multimedia.stop(Category.MUSIC);
-        //Multimedia.playSound("game_over.wav");
-        timer.scaleTransition.stop();
-        //gameWindow.startMenu();
-        gameWindow.startScores(game.getScore());
     }
 }

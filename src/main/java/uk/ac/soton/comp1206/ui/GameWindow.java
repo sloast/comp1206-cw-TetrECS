@@ -1,5 +1,6 @@
 package uk.ac.soton.comp1206.ui;
 
+import java.util.List;
 import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
@@ -9,6 +10,7 @@ import javafx.stage.Stage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import uk.ac.soton.comp1206.App;
+import uk.ac.soton.comp1206.component.ScoresList;
 import uk.ac.soton.comp1206.network.Communicator;
 import uk.ac.soton.comp1206.scene.BaseScene;
 import uk.ac.soton.comp1206.scene.ChallengeScene;
@@ -121,6 +123,10 @@ public class GameWindow {
 
     public void startScores(int score) {
         loadScene(new ScoresScene(this, score));
+    }
+
+    public void startScores(int score, ScoresList leaderboard) {
+        loadScene(new ScoresScene(this, score, leaderboard));
     }
 
     public void exitGame() {
