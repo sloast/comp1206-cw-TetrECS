@@ -1,6 +1,5 @@
 package uk.ac.soton.comp1206.ui;
 
-import java.util.List;
 import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
@@ -105,8 +104,13 @@ public class GameWindow {
         loadScene(new ChallengeScene(this));
     }
 
-    public void startMultiplayerGame() {
-        loadScene(new MultiplayerScene(this));
+    /**
+     *
+     *
+     * @param username the player's nickname in the current channel
+     */
+    public void startMultiplayerGame(String username) {
+        loadScene(new MultiplayerScene(this, username));
     }
 
     public void startLobby() {

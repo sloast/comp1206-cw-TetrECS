@@ -1,14 +1,11 @@
 package uk.ac.soton.comp1206.game;
 
 import java.util.ArrayDeque;
-import java.util.LinkedList;
 import java.util.Queue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import uk.ac.soton.comp1206.network.Communicator;
 import uk.ac.soton.comp1206.utils.Colour;
-import uk.ac.soton.comp1206.utils.Colour.TextColour;
-import uk.ac.soton.comp1206.utils.Colour.TextMode;
 
 public class MultiplayerGame extends Game {
 
@@ -107,7 +104,7 @@ public class MultiplayerGame extends Game {
     @Override
     public void score(int linesCleared, int blocksCleared) {
         super.score(linesCleared, blocksCleared);
-        communicator.send("SCORE " + this.actualScore.get());
+        communicator.send("SCORE " + this.score.get());
     }
 
 }

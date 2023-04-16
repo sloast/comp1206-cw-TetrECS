@@ -248,7 +248,7 @@ public class LobbyScene extends BaseScene {
             case "START" -> {
                 logger.info("The game has started in #" + currentChannel);
                 chatWindow.addSystemMessage("Game starting...");
-                Platform.runLater(gameWindow::startMultiplayerGame);
+                Platform.runLater(() -> gameWindow.startMultiplayerGame(chatWindow.username.get()));
             }
 
             case "ERROR" -> {

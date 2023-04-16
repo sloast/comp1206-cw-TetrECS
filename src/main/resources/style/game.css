@@ -156,12 +156,29 @@ Label {
 }
 
 .my-score {
-    -fx-text-fill: yellow;
+    -fx-text-fill: cyan;
+    -fx-underlined: true;
 }
 
 .dead-score {
     -fx-strikethrough: true;
     -fx-text-fill: #a6a5a5;
+}
+
+.score-lives-3 {
+    -fx-text-fill: green;
+}
+
+.score-lives-2 {
+    -fx-text-fill: yellow;
+}
+
+.score-lives-1 {
+    -fx-text-fill: orange;
+}
+
+.score-lives-0 {
+    -fx-text-fill: red;
 }
 
 .points {

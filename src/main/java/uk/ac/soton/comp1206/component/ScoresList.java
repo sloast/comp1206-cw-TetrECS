@@ -19,8 +19,13 @@ import javafx.scene.layout.GridPane;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import uk.ac.soton.comp1206.component.ScoresList.Score.ScoreType;
 
+
+/**
+ * Represents a list of scores. Displays the scores using a {@code GridPane} to maintain alignment.
+ *
+ * @author Adam Robson
+ */
 public class ScoresList extends GridPane {
 
     private static final Logger logger = LogManager.getLogger(ScoresList.class);
@@ -30,6 +35,13 @@ public class ScoresList extends GridPane {
      */
     public static class Score {
 
+        /**
+         * Create a new score
+         *
+         * @param username the username
+         * @param score    the score
+         * @param type     the type of score
+         */
         public Score(String username, int score, Score.ScoreType type) {
             this.username = username.replaceAll(":", "");
             this.score = score;
@@ -39,11 +51,23 @@ public class ScoresList extends GridPane {
             }
         }
 
+        /**
+         * Create a new score
+         *
+         * @param username the username
+         * @param score    the score
+         */
         public Score(String username, int score) {
             this.username = username;
             this.score = score;
         }
 
+        /**
+         * Create a new score from a string <br> String should be in the format
+         * {@code "username:score"}
+         *
+         * @param text the text to parse
+         */
         public Score(String text) {
             var split = text.split(" *: *");
             this.username = split[0];
@@ -65,7 +89,11 @@ public class ScoresList extends GridPane {
         public ScoreType type = ScoreType.NORMAL;
         public StringProperty usernameProperty;
 
-
+        /**
+         * Animate the score appearing
+         *
+         * @param delay the delay before the animation starts
+         */
         public void animate(Duration delay) {
             for (var node : nodes) {
                 if (node == null) {
@@ -93,6 +121,23 @@ public class ScoresList extends GridPane {
             }
         }
 
+        /**
+         * Get the style class for this score depending on its type
+         *
+         * @return the style class
+         */
+        public String getStyleClass() {
+            return switch (type) {
+                case MYSCORE -> "my-score";
+                default -> "";
+            };
+        }
+
+        /**
+         * Get a string representation of this score
+         *
+         * @return a string of the format {@code "username:score"}
+         */
         @Override
         public String toString() {
             return username + ":" + score;
@@ -101,7 +146,7 @@ public class ScoresList extends GridPane {
 
     public ListProperty<Score> scores;
 
-    public Comparator<Score> scoreComparator = (a, b) -> b.score - a.score;
+    public static final Comparator<Score> scoreComparator = (a, b) -> b.score - a.score;
 
     protected boolean frozen = true;
     protected static final int MAX_LIST_LENGTH = 10;
@@ -215,16 +260,12 @@ public class ScoresList extends GridPane {
             var scoreLabel = new Label(Integer.toString(score.score));
             scoreLabel.getStyleClass().add("scores-item");
 
-            if (score.type == ScoreType.MYSCORE) {
-                username.getStyleClass().add("my-score");
-                separator.getStyleClass().add("my-score");
-                scoreLabel.getStyleClass().add("my-score");
-            }
+            String styleClass = score.getStyleClass();
 
-            if (score.type == ScoreType.DIED) {
-                username.getStyleClass().add("dead-score");
-                separator.getStyleClass().add("dead-score");
-                scoreLabel.getStyleClass().add("dead-score");
+            if (!styleClass.isBlank()) {
+                username.getStyleClass().add(styleClass);
+                separator.getStyleClass().add(styleClass);
+                scoreLabel.getStyleClass().add(styleClass);
             }
 
             score.nodes = new Node[]{username, separator, scoreLabel};

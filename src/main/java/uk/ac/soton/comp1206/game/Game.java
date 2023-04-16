@@ -7,9 +7,6 @@ import java.util.Queue;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.util.Duration;
@@ -33,7 +30,11 @@ import uk.ac.soton.comp1206.utils.Vector2;
 public class Game {
 
     private static final Logger logger = LogManager.getLogger(Game.class);
-    public static boolean USE_EXECUTOR_SERVICE = false;
+
+    /** Using the internal timer keeps the logic more separated from the UI
+     * but the speedup button doesn't work properly, so it is currently disabled
+     */
+    public static final boolean USE_INTERNAL_TIMER = false;
     /**
      * Number of rows
      */
@@ -51,22 +52,32 @@ public class Game {
     public boolean usingKeyboard = false;
     public GameBlock hoveredBlock = null;
     public GameBlock lastHoveredBlock = null;
-    public IntegerProperty displayedScore = new SimpleIntegerProperty(1);
+
+    // Properties that the UI can bind to
     public IntegerProperty lives = new SimpleIntegerProperty(3);
     public IntegerProperty level = new SimpleIntegerProperty(0);
     public IntegerProperty multiplier = new SimpleIntegerProperty(1);
-    protected IntegerProperty actualScore = new SimpleIntegerProperty(0);
+    public IntegerProperty score = new SimpleIntegerProperty(0);
+
+    // Listeners
     protected NextPieceListener nextPieceListener;
     protected LineClearedListener lineClearedListener;
     protected GameOverListener gameOverListener;
     protected GameLoopListener gameLoopListener;
+
+    // Game actions are only allowed while the game is running
     boolean running = false;
+
+    // Pieces
     GamePiece currentPiece = null;
     GamePiece nextPiece = null;
+    private final Queue<Integer> pieceQueue = new LinkedList<>();
+
+    // Timer
     Timer timer;
     double startTime;
     boolean timerFast = false;
-    private Queue<Integer> pieceQueue = new LinkedList<>();
+
 
     /**
      * Create a new game with the specified rows and columns. Creates a corresponding grid model.
@@ -109,7 +120,7 @@ public class Game {
 
     public void loseLife() {
         lives.set(lives.get() - 1);
-        if (lives.get() <= 0) {
+        if (lives.get() < 0) {
             onDied();
         } else {
             nextPiece();
@@ -144,13 +155,17 @@ public class Game {
     }
 
     public int getScore() {
-        return actualScore.get();
+        return score.get();
     }
 
+    /**
+     * Resets the timer
+     */
     void resetTimer() {
         gameLoopListener.onGameLoop(getTimerDelayMillis());
 
-        if (USE_EXECUTOR_SERVICE) {
+        // Reset internal timer
+        if (USE_INTERNAL_TIMER) {
 
             if (timer != null) {
                 timer.cancel();
@@ -221,6 +236,11 @@ public class Game {
         }
     }
 
+    /**
+     * Handle the mouse hovering over a block
+     *
+     * @param gameBlock the block that was hovered over
+     */
     public void onBlockHoverEnter(GameBlock gameBlock) {
         if (!running) {
             return;
@@ -234,6 +254,11 @@ public class Game {
         refreshPreview();
     }
 
+    /**
+     * Handle the mouse un-hovering a block
+     *
+     * @param gameBlock the block that the mouse exited
+     */
     public void onBlockHoverExit(GameBlock gameBlock) {
         if (!running) {
             return;
@@ -245,6 +270,9 @@ public class Game {
         refreshPreview();
     }
 
+    /**
+     * Rotates the current piece clockwise
+     */
     public void rotateCurrentPiece() {
         if (!running) {
             return;
@@ -256,7 +284,10 @@ public class Game {
         refreshPreview();
     }
 
-    public void rotateCurrentPieceReverse() {
+    /**
+     * Rotates the current piece counter-clockwise
+     */
+    public void rotateCurrentPieceCounterClockwise() {
         if (!running) {
             return;
         }
@@ -269,11 +300,16 @@ public class Game {
         refreshPreview();
     }
 
+    /**
+     * Updates the board and pieceBoards to show where the next block will be placed, and its
+     * orientation
+     */
     void refreshPreview() {
         if (!running) {
             return;
         }
 
+        // removed for spamming the console
         //logger.info("refresh");
 
         grid.resetAllTempValues();
@@ -281,15 +317,21 @@ public class Game {
             previewPiece(hoveredBlock);
         }
         updatePieceBoards();
-        // currentPieceBoard.setPiece(currentPiece);
-        // nextPieceBoard.setPiece(nextPiece);
     }
 
+    /**
+     * Displays a piece semi-transparently on the board to show where it will be placed
+     *
+     * @param gameBlock the block to display
+     */
     private void previewPiece(GameBlock gameBlock) {
         boolean valid = grid.canPlayPiece(currentPiece, gameBlock.getX(), gameBlock.getY());
         grid.previewPiece(currentPiece, gameBlock.getX(), gameBlock.getY(), valid);
     }
 
+    /**
+     * After a piece has been placed, checks for any cleared rows or columns and updates the score
+     */
     void afterPiece() {
         int clearedRows = 0;
         var clearedBlocks = new HashSet<Vector2>();
@@ -375,6 +417,11 @@ public class Game {
         this.nextPiece(false);
     }
 
+    /**
+     * Get the next piece from the queue.
+     *
+     * @param reset If true, the queue will be cleared and re-generated
+     */
     public void nextPiece(boolean reset) {
         //currentPiece = spawnPiece();
 
@@ -411,6 +458,9 @@ public class Game {
         refreshPreview();
     }
 
+    /**
+     * Update the pieceBoard UI components on the current held pieces
+     */
     private void updatePieceBoards() {
         if (nextPieceListener != null) {
             nextPieceListener.onNextPiece(currentPiece, nextPiece);
@@ -445,6 +495,9 @@ public class Game {
         refreshPreview();
     }
 
+    /**
+     * Reset the board (for testing)
+     */
     public void resetBoard() {
         for (int x = 0; x < cols; x++) {
             for (int y = 0; y < rows; y++) {
@@ -455,32 +508,25 @@ public class Game {
         refreshPreview();
     }
 
+    /**
+     * Update the score after the player plays a piece
+     *
+     * @param linesCleared  the number of lines cleared by this action
+     * @param blocksCleared the number of blocks cleared by this action
+     */
     public void score(int linesCleared, int blocksCleared) {
 
         if (linesCleared > 0) {
-            actualScore.set(
-                    linesCleared * blocksCleared * 10 * multiplier.get() + actualScore.get());
-            level.set(actualScore.get() / 1000);
+            int points = linesCleared * blocksCleared * 10 * multiplier.get();
+
+            score.set(points + score.get());
+            level.set(score.get() / 1000);
             multiplier.set(multiplier.get() + 1);
 
-            Timeline anim = new Timeline();
-            anim.getKeyFrames().add(new KeyFrame(
-                    Duration.ZERO,
-                    new KeyValue(displayedScore, displayedScore.get())
-            ));
-            anim.getKeyFrames().add(new KeyFrame(
-                    Duration.millis(300),
-                    new KeyValue(displayedScore, actualScore.get())
-            ));
-            anim.play();
-
-            logger.info(Colour.green("Scored {} points"),
-                    linesCleared * blocksCleared * 10 * multiplier.get());
+            logger.info(Colour.green("Scored {} points"), points);
         } else {
             multiplier.set(1);
         }
-
-        //displayedScore.set(actualScore.get());
 
     }
 

@@ -1,24 +1,21 @@
 package uk.ac.soton.comp1206.component;
 
 import java.util.HashMap;
-import javafx.animation.AnimationTimer;
 import javafx.animation.Interpolator;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
+import javafx.animation.RotateTransition;
 import javafx.animation.ScaleTransition;
-import javafx.animation.Timeline;
+import javafx.beans.Observable;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Pane;
-import javafx.scene.paint.*;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import javafx.util.Duration;
 import javafx.util.Pair;
 import org.apache.logging.log4j.LogManager;
@@ -28,11 +25,11 @@ import uk.ac.soton.comp1206.utils.Vector2;
 
 /**
  * The Visual User Interface component representing a single block in the grid.
- *
+ * <p>
  * Extends Canvas and is responsible for drawing itself.
- *
+ * <p>
  * Displays an empty square (when the value is 0) or a coloured square depending on value.
- *
+ * <p>
  * The GameBlock value should be bound to a corresponding block in the Grid model.
  */
 public class GameBlock extends Canvas {
@@ -60,9 +57,8 @@ public class GameBlock extends Canvas {
             Color.MEDIUMPURPLE,
             Color.PURPLE,
 
-            //Color.rgb(255, 0, 0, .5),
+            // For invalid placement
 
-            Color.RED,
     };
 
     private final GameBoard gameBoard;
@@ -94,11 +90,12 @@ public class GameBlock extends Canvas {
 
     /**
      * Create a new single Game Block
+     *
      * @param gameBoard the board this block belongs to
-     * @param x the column the block exists in
-     * @param y the row the block exists in
-     * @param width the width of the canvas to render
-     * @param height the height of the canvas to render
+     * @param x         the column the block exists in
+     * @param y         the row the block exists in
+     * @param width     the width of the canvas to render
+     * @param height    the height of the canvas to render
      */
     public GameBlock(GameBoard gameBoard, int x, int y, double width, double height) {
         this.gameBoard = gameBoard;
@@ -109,30 +106,37 @@ public class GameBlock extends Canvas {
 
         this.corner_radius *= this.width / BASE_WIDTH;
 
-        //A canvas needs a fixed width and height
+        // A canvas needs a fixed width and height
         setWidth(width);
         setHeight(height);
 
-        //Do an initial paint
+        // Do an initial paint
         paint();
 
-        //When the value property is updated, call the internal updateValue method
-        value.addListener(this::updateValue);
-        hovered.addListener(this::updateBoolean);
+        // When a property is changed, repaint the canvas
+        value.addListener(this::update);
+        hovered.addListener(this::update);
     }
 
 
     /**
-     * When the value of this block is updated,
+     * When the value of this block is updated, repaint the canvas
+     *
      * @param observable what was updated
-     * @param oldValue the old value
-     * @param newValue the new value
+     * @param oldValue   the old value
+     * @param newValue   the new value
      */
-    private void updateValue(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+    private void updateValue(ObservableValue<? extends Number> observable, Number oldValue,
+            Number newValue) {
         paint();
     }
 
-    private void updateBoolean(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+    /**
+     * Repaints the block when the {@code Observable} is updated
+     *
+     * @param invalidated the updated property
+     */
+    private void update(Observable invalidated) {
         paint();
     }
 
@@ -140,10 +144,10 @@ public class GameBlock extends Canvas {
      * Handle painting of the block canvas
      */
     public void paint() {
-        //If the block is empty, paint as empty
+        // If the block is empty, paint as empty
 
         var val = value.get();
-        if(val == 0) {
+        if (val == 0) {
             //paintEmpty();
             paintEmpty();
         } else if (val < 0) { // Add red over existing color to show invalid placement
@@ -155,29 +159,18 @@ public class GameBlock extends Canvas {
                 paintColor(Color.RED.interpolate(col, 0.3));
             }
 
-
         } else if (val >= 100) { // preview -> paint semi-transparent
             var col = COLOURS[val - 100];
             paintColor(Color.TRANSPARENT.interpolate(col, 0.7));
 
         } else {
-            //If the block is not empty, paint with the colour represented by the value
+            // If the block is not empty, paint with the colour represented by the value
             paintColor(COLOURS[val]);
         }
 
         if (hovered.get()) {
-            //paintHover();
+            // paintHover();
         }
-    }
-
-    private void paintHover() {
-        var gc = getGraphicsContext2D();
-        gc.setLineWidth(5);
-        gc.setStroke(Color.rgb(255, 255, 255, 0.7));
-        var radius = 0;
-        gc.strokeRoundRect(0, 0, width, height, radius, radius);
-
-        //gc.strokeLine(0, 0, width, height);
     }
 
     /**
@@ -194,7 +187,6 @@ public class GameBlock extends Canvas {
         gc.setFill(Color.rgb(100, 100, 100, 0.3));
         //gc.fillRoundRect(0, 0, width, height, CORNER_RADIUS, CORNER_RADIUS);
 
-
         //gc.drawImage(Multimedia.getImage("blockw.png"), 0, 0, width, height);
 
         //Border
@@ -206,6 +198,11 @@ public class GameBlock extends Canvas {
         //paintImage(Color.rgb(100, 100, 100, 0.5));
     }
 
+    /**
+     * Paints the block using an image, which is recolored using the given {@code Color}.
+     *
+     * @param color the color to paint the block with
+     */
     protected void paintImage(Color color) {
 
         var key = new Pair<>(value.get(), hovered.get());
@@ -215,22 +212,20 @@ public class GameBlock extends Canvas {
             return;
         }
 
-        //Image blankImage = Multimedia.getImage("block.png");
         WritableImage newImage = new WritableImage((int) BASE_IMAGE.getWidth(),
                 (int) BASE_IMAGE.getHeight());
         var reader = BASE_IMAGE.getPixelReader();
         var writer = newImage.getPixelWriter();
 
-
-
         for (int x = 0; x < newImage.getWidth(); x++) {
             for (int y = 0; y < newImage.getHeight(); y++) {
 
-                if (reader.getColor(x, y).equals(Color.WHITE)) {
+                if (reader.getColor(x, y).equals(Color.WHITE)) { // The inside of the block
                     writer.setColor(x, y, color);
-                } else if (reader.getColor(x, y).equals(Color.BLACK)) {
+                } else if (reader.getColor(x, y).equals(Color.BLACK)) { // The shadow at the bottom
                     writer.setColor(x, y, color.interpolate(Color.BLACK, 0.2));
-                } else {
+                } else { // the border of the block
+                    // Sets the border to white if the block is hovered
                     if (hovered.get() && reader.getColor(x, y).isOpaque()) {
                         writer.setColor(x, y, Color.WHITE);
                     } else {
@@ -249,6 +244,7 @@ public class GameBlock extends Canvas {
 
     /**
      * Paint this canvas with the given colour
+     *
      * @param colour the colour to paint
      */
     private void paintColor(Paint colour) {
@@ -256,7 +252,7 @@ public class GameBlock extends Canvas {
         var gc = getGraphicsContext2D();
 
         //Clear
-        gc.clearRect(0,0,width,height);
+        gc.clearRect(0, 0, width, height);
 
         //Colour fill
         //gc.setFill(colour);
@@ -271,6 +267,7 @@ public class GameBlock extends Canvas {
 
     /**
      * Get the column of this block
+     *
      * @return column number
      */
     public int getX() {
@@ -279,6 +276,7 @@ public class GameBlock extends Canvas {
 
     /**
      * Get the row of this block
+     *
      * @return row number
      */
     public int getY() {
@@ -287,6 +285,7 @@ public class GameBlock extends Canvas {
 
     /**
      * Get the current value held by this block, representing its colour
+     *
      * @return value
      */
     public int getValue() {
@@ -294,25 +293,44 @@ public class GameBlock extends Canvas {
     }
 
     /**
-     * Bind the value of this block to another property. Used to link the visual block to a corresponding block in the Grid.
+     * Bind the value of this block to another property. Used to link the visual block to a
+     * corresponding block in the Grid.
+     *
      * @param input property to bind the value to
      */
     public void bind(ObservableValue<? extends Number> input) {
         value.bind(input);
     }
 
+    /**
+     * Called when the mouse enters the block
+     */
     public void hoverEnter() {
         this.hovered.set(true);
     }
 
+    /**
+     * Called when the mouse exits the block
+     */
     public void hoverExit() {
         this.hovered.set(false);
     }
 
+    /**
+     * Get the position of this block in the game board
+     *
+     * @return the position of this block as a Vector2
+     */
     public Vector2 getPosition() {
         return new Vector2(x, y);
     }
 
+    /**
+     * Animate the block being cleared
+     *
+     * @param parent the parent pane to draw the animation on
+     * @param delay  the delay before the animation starts
+     */
     public void fadeOut(Pane parent, double delay) {
         logger.info("Fading out block at " + x + ", " + y + " with value " + value.get());
 
@@ -327,7 +345,7 @@ public class GameBlock extends Canvas {
 
         child.setMouseTransparent(true);
 
-        double duration = 250;
+        double duration = 300;
 
         ScaleTransition scaleTransition = new ScaleTransition(Duration.millis(duration), child);
         scaleTransition.setFromX(1);
@@ -335,13 +353,17 @@ public class GameBlock extends Canvas {
         scaleTransition.setToX(0);
         scaleTransition.setToY(0);
         scaleTransition.setInterpolator(Interpolator.LINEAR);
+        scaleTransition.setDelay(Duration.millis(delay));
+
+        RotateTransition rotateTransition = new RotateTransition(Duration.millis(duration), child);
+        rotateTransition.setByAngle(90);
+        rotateTransition.setInterpolator(Interpolator.EASE_IN);
+        rotateTransition.setDelay(Duration.millis(delay));
 
         scaleTransition.setOnFinished(event -> parent.getChildren().remove(child));
 
-        scaleTransition.setDelay(Duration.millis(delay));
-
         scaleTransition.play();
-
+        rotateTransition.play();
 
         parent.getChildren().add(child);
     }

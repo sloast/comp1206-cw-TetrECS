@@ -222,7 +222,8 @@ public class MenuScene extends BaseScene {
                 communicator.send("NICK " + UUID.randomUUID());
                 communicator.send("START");
                 communicator.addListener((m) -> {
-                    if (m.equals("START")) Platform.runLater(gameWindow::startMultiplayerGame);
+                    if (m.equals("START")) Platform.runLater(
+                            () -> gameWindow.startMultiplayerGame(m));
                 });
             }
             case J -> {
@@ -231,7 +232,8 @@ public class MenuScene extends BaseScene {
                 communicator.send("JOIN " + "a8d485f084bc984");
                 communicator.send("NICK " + "MyPlayer");
                 communicator.addListener((m) -> {
-                    if (m.equals("START")) Platform.runLater(gameWindow::startMultiplayerGame);
+                    if (m.equals("START")) Platform.runLater(
+                            () -> gameWindow.startMultiplayerGame(m));
                 });
             }
             case L -> gameWindow.startLobby();

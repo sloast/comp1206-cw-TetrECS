@@ -7,11 +7,11 @@ public class PieceBoard extends GameBoard {
 
 
     public PieceBoard(Grid grid, double width, double height) {
-        super(grid, width, height, false);
+        super(grid, width, height);
     }
 
     public PieceBoard(double width, double height) {
-        super(new Grid(3, 3), width, height, false);
+        super(new Grid(3, 3), width, height);
     }
 
     public void setPiece(GamePiece piece) {

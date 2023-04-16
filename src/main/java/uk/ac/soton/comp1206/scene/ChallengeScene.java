@@ -9,6 +9,9 @@ import javafx.animation.KeyValue;
 import javafx.animation.ScaleTransition;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.beans.Observable;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -42,8 +45,7 @@ import uk.ac.soton.comp1206.utils.Vector2;
  * game.
  */
 public class ChallengeScene extends BaseScene {
-
-    public static final boolean USE_GAME_INTERNAL_TIMER = false;
+    
     private static final Logger logger = LogManager.getLogger(ChallengeScene.class);
     public PieceBoard currentPieceBoard;
     public PieceBoard nextPieceBoard;
@@ -53,6 +55,8 @@ public class ChallengeScene extends BaseScene {
     GameBoard board;
     VBox livesContainer;
     GameTimer timer;
+    public static boolean disableTimerActions = false;
+    final IntegerProperty displayedScore = new SimpleIntegerProperty(0);
 
 
     /**
@@ -99,6 +103,7 @@ public class ChallengeScene extends BaseScene {
 
         mainPane.setRight(pieceBoardContainer);
 
+        // Header section for scores and multiplier
         var infoBox = new BorderPane();
         {
 
@@ -107,7 +112,9 @@ public class ChallengeScene extends BaseScene {
                 var scoreBox = new HBox();
                 var scoreLabel = new Label("score ");
                 var score = new Label("0");
-                score.textProperty().bind(game.displayedScore.asString());
+                score.textProperty().bind(displayedScore.asString());
+                game.score.addListener(this::onScoreChanged);
+
                 scoreBox.getChildren().addAll(scoreLabel, score);
                 score.getStyleClass().add("score");
                 scoreLabel.getStyleClass().add("regularlabel");
@@ -163,8 +170,9 @@ public class ChallengeScene extends BaseScene {
         }
         mainPane.setLeft(livesContainer);
 
+        // The timer
         var timerContainer = new HBox();
-        timer = new GameTimer(0, 0, 700, 20);
+        timer = new GameTimer(700, 20);
         timerContainer.getChildren().add(timer);
         timerContainer.setAlignment(Pos.CENTER);
         mainPane.setBottom(timerContainer);
@@ -181,31 +189,43 @@ public class ChallengeScene extends BaseScene {
         game.blockClicked(gameBlock);
     }
 
+    /**
+     * Handle when the mouse hovers over a block (to highlight it)
+     */
     protected void blockHoverEnter(GameBlock gameBlock) {
         game.onBlockHoverEnter(gameBlock);
     }
 
+    /**
+     * Handle when the mouse exits a block
+     */
     protected void blockHoverExit(GameBlock gameBlock) {
         game.onBlockHoverExit(gameBlock);
     }
 
+    /**
+     * For when the right mouse button is pressed or e pressed
+     */
     protected void rotateCurrentPiece(GameBlock ignored) {
         game.rotateCurrentPiece();
     }
 
+    /**
+     * Handle the next piece board being clicked
+     */
     protected void swapCurrentPiece(GameBlock ignored) {
         game.swapPieces();
     }
 
     /**
-     * Setup the game object and model
+     * Set up the game object and model
      */
     public void setupGame() {
         logger.info("Starting a new challenge");
 
         //Start new game
         game = new Game(5, 5);
-        Game.USE_EXECUTOR_SERVICE = USE_GAME_INTERNAL_TIMER;
+        disableTimerActions = Game.USE_INTERNAL_TIMER;
     }
 
     /**
@@ -233,6 +253,8 @@ public class ChallengeScene extends BaseScene {
         });
 
         scene.setOnKeyPressed(this::onKeyPress);
+
+        // To update the lives HUD element
         game.lives.addListener(this::onLifeChange);
 
         // Handle block on GameBoard grid being clicked
@@ -262,8 +284,12 @@ public class ChallengeScene extends BaseScene {
         game.start();
     }
 
-
-    public void onKeyPress(KeyEvent event) {
+    /**
+     * Handle keypress
+     *
+     * @param event The keyboard event
+     */
+    private void onKeyPress(KeyEvent event) {
         var keyCode = event.getCode();
         logger.info("Key pressed: " + keyCode);
         switch (keyCode) {
@@ -272,7 +298,7 @@ public class ChallengeScene extends BaseScene {
             case DOWN, S -> onArrowKeyPressed(Vector2.down());
             case UP, W -> onArrowKeyPressed(Vector2.up());
             case E, C, CLOSE_BRACKET -> game.rotateCurrentPiece();
-            case Q, Z, OPEN_BRACKET -> game.rotateCurrentPieceReverse();
+            case Q, Z, OPEN_BRACKET -> game.rotateCurrentPieceCounterClockwise();
             case R, SPACE -> game.swapPieces();
             case ENTER -> game.keyboardPlayPiece();
             case SHIFT -> timer.speedUp(true);
@@ -283,7 +309,10 @@ public class ChallengeScene extends BaseScene {
         }
     }
 
-    public void testingKeyBinds(KeyEvent event) {
+    /**
+     * Handles keybinds used for testing
+     */
+    private void testingKeyBinds(KeyEvent event) {
         var keyCode = event.getCode();
         logger.info(Colour.orange("Debug key pressed: " + keyCode));
         switch (keyCode) {
@@ -294,7 +323,10 @@ public class ChallengeScene extends BaseScene {
         }
     }
 
-    void onLifeChange(ObservableValue<? extends Number> observableValue, Number oldValue,
+    /**
+     * Update UI when player loses a life
+     */
+    private void onLifeChange(ObservableValue<? extends Number> observableValue, Number oldValue,
             Number newValue) {
         logger.info(Colour.purple("Lives changed from " + oldValue + " to " + newValue));
         int max = game.MAX_LIVES;
@@ -309,7 +341,12 @@ public class ChallengeScene extends BaseScene {
         }
     }
 
-    public void onArrowKeyPressed(Vector2 direction) {
+    /**
+     * Handle arrow keys being pressed
+     *
+     * @param direction The direction represented by the arrow key
+     */
+    private void onArrowKeyPressed(Vector2 direction) {
         if (!game.isRunning()) {
             return;
         }
@@ -332,7 +369,10 @@ public class ChallengeScene extends BaseScene {
         game.hoverBlockKeyboard(hoveredBlock);
     }
 
-    public void gameOver() {
+    /**
+     * Called when the game ends
+     */
+    private void gameOver() {
         logger.info(Colour.red("Game Over"));
         Multimedia.stop(Category.MUSIC);
         //Multimedia.playSound("game_over.wav");
@@ -341,9 +381,29 @@ public class ChallengeScene extends BaseScene {
         startScores();
     }
 
+    /**
+     * Start the ScoresScene
+     */
     void startScores() {
         gameWindow.startScores(game.getScore());
     }
+
+    /**
+     * Play an animation for the score when it changes
+     */
+    void onScoreChanged(Observable observable, Number oldValue, Number newValue) {
+        Timeline anim = new Timeline();
+        anim.getKeyFrames().add(new KeyFrame(
+                Duration.ZERO,
+                new KeyValue(displayedScore, displayedScore.get())
+        ));
+        anim.getKeyFrames().add(new KeyFrame(
+                Duration.millis(300),
+                new KeyValue(displayedScore, newValue)
+        ));
+        anim.play();
+    }
+
 
     /**
      * The Timer at the bottom of the screen
@@ -354,16 +414,29 @@ public class ChallengeScene extends BaseScene {
         private int colorStage = 2;
         private Timeline colorAnimation;
 
-        public GameTimer(double x, double y, double width, double height) {
-            super(x, y, width, height);
+        /**
+         * Create a new GameTimer
+         *
+         * @param width the starting width of the timer
+         * @param height the height of the timer
+         */
+        public GameTimer(double width, double height) {
+            super(0, 0, width, height);
             this.setFill(Color.GREEN);
         }
 
+        /**
+         * Reset the timer bar to the start
+         *
+         * @param ms the duration of the animation, in milliseconds
+         */
         void reset(double ms) {
             //timer = new Rectangle(0, 0, 700, 40);
             if (colorAnimation != null) {
                 colorAnimation.stop();
             }
+
+            // Reset the color. Is delayed to allow the previous animation to fully stop first
             Platform.runLater(() -> {
                 this.setFill(Color.GREEN);
                 this.setScaleX(1);
@@ -371,6 +444,7 @@ public class ChallengeScene extends BaseScene {
             this.setFill(Color.GREEN);
             colorStage = 2;
 
+            // Resets the scaleTransition if it exists
             if (scaleTransition != null) {
                 scaleTransition.stop();
                 this.setFill(Color.GREEN);
@@ -385,13 +459,14 @@ public class ChallengeScene extends BaseScene {
             scaleTransition.setToX(0);
             scaleTransition.setInterpolator(Interpolator.LINEAR);
 
-            if (!USE_GAME_INTERNAL_TIMER) {
+            if (!disableTimerActions) {
                 scaleTransition.setOnFinished(e -> game.loseLife());
             }
 
             scaleTransition.play();
 
-            // simplest way to make this work
+            // May not be the best way to do this, but it works with the speedup button.
+            // Checks 10 times per second if the color should be changed.
             ScheduledExecutorService checkColor = Executors.newSingleThreadScheduledExecutor();
             checkColor.scheduleAtFixedRate(() -> {
                 if (colorStage == 2 && getProportionComplete() > 0.5) {
@@ -404,6 +479,10 @@ public class ChallengeScene extends BaseScene {
             }, 100, 100, TimeUnit.MILLISECONDS);
         }
 
+        /**
+         * Create and start a new transition from the current colour to {@code endColor}
+         * <br>Stops any previous color transition
+         */
         private void animateColour(Color endColor) {
             if (colorAnimation != null) {
                 colorAnimation.stop();
@@ -414,6 +493,9 @@ public class ChallengeScene extends BaseScene {
             colorAnimation.play();
         }
 
+        /**
+         * Returns the proportion of the animation that has elapsed, from 0 to 1
+         */
         private double getProportionComplete() {
             var time = scaleTransition.getCurrentTime();
             var duration = scaleTransition.getDuration();
@@ -422,9 +504,11 @@ public class ChallengeScene extends BaseScene {
 
 
         /**
-         * Speed up the timer when shift is held down
+         * Speed up the timer by 4x
          */
         public void speedUp(boolean active) {
+            // This feature makes everything else in the timer more complicated
+
             game.setTimerSpeed(active);
             var time = scaleTransition.getCurrentTime();
             var duration = scaleTransition.getDuration();

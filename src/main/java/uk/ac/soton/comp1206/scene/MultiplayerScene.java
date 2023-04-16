@@ -15,25 +15,24 @@ import uk.ac.soton.comp1206.component.PieceBoard;
 import uk.ac.soton.comp1206.game.Game;
 import uk.ac.soton.comp1206.game.MultiplayerGame;
 import uk.ac.soton.comp1206.ui.GameWindow;
-import uk.ac.soton.comp1206.utils.Colour;
 import uk.ac.soton.comp1206.utils.Multimedia;
-import uk.ac.soton.comp1206.utils.Multimedia.Category;
 
 public class MultiplayerScene extends ChallengeScene {
 
     private static final Logger logger = LogManager.getLogger(MultiplayerScene.class);
 
-    private MultiplayerGame multiplayerGame;
     private Leaderboard leaderboard;
+    private final String myUsername;
 
     /**
      * Create a new Single Player challenge scene
      *
      * @param gameWindow the Game Window
+     * @param myUsername the username of the player
      */
-    public MultiplayerScene(GameWindow gameWindow) {
+    public MultiplayerScene(GameWindow gameWindow, String myUsername) {
         super(gameWindow);
-
+        this.myUsername = myUsername;
     }
 
     @Override
@@ -41,13 +40,13 @@ public class MultiplayerScene extends ChallengeScene {
         logger.info("Creating new multiplayer game");
 
         //Start new game
-        multiplayerGame = new MultiplayerGame(5, 5, gameWindow.getCommunicator());
-        game = multiplayerGame;
-        Game.USE_EXECUTOR_SERVICE = USE_GAME_INTERNAL_TIMER;
+        game = new MultiplayerGame(5, 5, gameWindow.getCommunicator());
+        disableTimerActions = Game.USE_INTERNAL_TIMER;
     }
 
     @Override
     public void build() {
+        // Yes, i copy pasted this from challengescene
         logger.info("Building " + this.getClass().getName());
 
         setupGame();
@@ -92,7 +91,7 @@ public class MultiplayerScene extends ChallengeScene {
 
         sideBar.getChildren().add(pieceBoardContainer);
 
-        leaderboard = new Leaderboard();
+        leaderboard = new Leaderboard(0.75, 300, myUsername);
 
         gameWindow.getCommunicator().addListener(this::onCommunication);
         gameWindow.getCommunicator().send("SCORES");
@@ -109,7 +108,8 @@ public class MultiplayerScene extends ChallengeScene {
                 var scoreBox = new HBox();
                 var scoreLabel = new Label("score ");
                 var score = new Label("0");
-                score.textProperty().bind(game.displayedScore.asString());
+                score.textProperty().bind(displayedScore.asString());
+                game.score.addListener(super::onScoreChanged);
                 scoreBox.getChildren().addAll(scoreLabel, score);
                 score.getStyleClass().add("score");
                 scoreLabel.getStyleClass().add("regularlabel");
@@ -166,7 +166,7 @@ public class MultiplayerScene extends ChallengeScene {
         mainPane.setLeft(livesContainer);
 
         var timerContainer = new HBox();
-        timer = new GameTimer(0, 0, 700, 20);
+        timer = new GameTimer(700, 20);
         timerContainer.getChildren().add(timer);
         timerContainer.setAlignment(Pos.CENTER);
         mainPane.setBottom(timerContainer);
@@ -175,6 +175,11 @@ public class MultiplayerScene extends ChallengeScene {
 
     }
 
+    /**
+     * Handle communication from the server
+     *
+     * @param communication the message that was received
+     */
     public void onCommunication(String communication) {
         var split = communication.split(" ", 2);
 
