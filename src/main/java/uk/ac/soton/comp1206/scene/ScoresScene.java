@@ -16,11 +16,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import uk.ac.soton.comp1206.network.Communicator;
-import uk.ac.soton.comp1206.ui.GameWindow;
 import uk.ac.soton.comp1206.component.ScoresList;
 import uk.ac.soton.comp1206.component.ScoresList.Score;
 import uk.ac.soton.comp1206.component.ScoresList.Score.ScoreType;
+import uk.ac.soton.comp1206.network.Communicator;
+import uk.ac.soton.comp1206.ui.GameWindow;
 import uk.ac.soton.comp1206.utils.Colour;
 
 public class ScoresScene extends BaseScene {
@@ -31,7 +31,7 @@ public class ScoresScene extends BaseScene {
     ;
 
     private boolean checkLastScore = false;
-    private int newScore = 0;
+    private int newScore = -1;
     private HiScoresList onlineScores;
 
     private Score newScoreObj;
@@ -44,7 +44,8 @@ public class ScoresScene extends BaseScene {
         this(gameWindow, score);
         fromMultiplayer = true;
         multiplayerScores = leaderboard;
-        checkLastScore = false;
+        checkLastScore = true;
+        newScore = score;
     }
 
     /**
@@ -66,6 +67,7 @@ public class ScoresScene extends BaseScene {
      */
     public ScoresScene(GameWindow gameWindow) {
         super(gameWindow);
+        checkLastScore = false;
     }
 
 
@@ -77,9 +79,10 @@ public class ScoresScene extends BaseScene {
         // Titles
         var header = new VBox();
 
-        // "Game Over" text
+        // "Game Over" / "High Scores" text
+        String headerText = newScore == -1 ? "HIGH SCORES" : "GAME OVER";
         var gameOverBox = new HBox();
-        var gameOverLabel = new Label("GAME OVER");
+        var gameOverLabel = new Label(headerText);
         gameOverLabel.getStyleClass().add("title");
         gameOverBox.getChildren().add(gameOverLabel);
         gameOverBox.setAlignment(Pos.CENTER);
@@ -95,11 +98,16 @@ public class ScoresScene extends BaseScene {
         titleBox.setAlignment(Pos.CENTER);
         titleBox.setPadding(new Insets(10, 0, 20, 0));
         header.getChildren().add(titleBox);
+        if (newScore == -1) {
+            titleBox.setVisible(false);
+        }
 
         mainPane.setTop(header);
 
         // Contains the two score lists
         var scoresContainer = new HBox();
+
+        localScores = loadScores();
 
         if (!fromMultiplayer) {
 
@@ -108,7 +116,7 @@ public class ScoresScene extends BaseScene {
             localScoresTitle.getStyleClass().add("title");
 
             localScoresContainer.getStyleClass().add("generic-box");
-            localScores = loadScores();
+
             localScoresContainer.getChildren().addAll(localScoresTitle, localScores);
             localScoresContainer.setAlignment(Pos.TOP_CENTER);
             //localScoresContainer.setPadding(new Insets(20,0,0,0));
@@ -122,7 +130,6 @@ public class ScoresScene extends BaseScene {
             thisGameScoresLabel.getStyleClass().add("title");
 
             thisGameScoresContainer.getStyleClass().add("generic-box");
-            localScores = new HiScoresList();
             multiplayerScores.setMaxWidth(Double.MAX_VALUE);
             thisGameScoresContainer.getChildren().addAll(thisGameScoresLabel, multiplayerScores);
             thisGameScoresContainer.setAlignment(Pos.TOP_CENTER);
@@ -159,11 +166,11 @@ public class ScoresScene extends BaseScene {
         mainPane.setCenter(scoresContainer);
 
         // Check if user beat a score on the leaderboard
-        if (checkLastScore) {
+        newScoreObj = new Score("%ENTER_NAME%", newScore, ScoreType.NEWSCORE);
+        if (checkLastScore && !fromMultiplayer) {
             Score lowest = localScores.min();
 
             if (newScore > lowest.score) {
-                newScoreObj = new Score("%ENTER_NAME%", newScore, ScoreType.NEWSCORE);
                 localScores.scores.remove(lowest);
                 localScores.scores.add(newScoreObj);
                 title.setText("NEW HIGH SCORE!");
@@ -245,7 +252,7 @@ public class ScoresScene extends BaseScene {
     /**
      * Saves the scores to the {@code scores.txt} file.
      */
-    void saveScores(List<String> scores) {
+    private void saveScores(List<String> scores) {
         try {
             Files.write(scoresPath, scores);
         } catch (Exception e) {
@@ -253,14 +260,30 @@ public class ScoresScene extends BaseScene {
         }
     }
 
-    void rebuildAll() {
+    /**
+     * Rebuilds the {@link ScoresList} objects
+     */
+    private void rebuildAll() {
         localScores.rebuild();
         onlineScores.rebuild();
     }
 
-    void onNameEntered() {
+    /**
+     * Saves the updated scores to the file, and sends the new score to the server if it is high
+     * enough
+     */
+    private void onNameEntered() {
         rebuildAll();
+
+        // Make sure the new score is in the list
+        if (fromMultiplayer) {
+            localScores.scores.add(newScoreObj);
+        }
+
+        // Save scores to the file
         localScores.save();
+
+        // Send the new score to the server
         if (newScore > onlineScores.min().score) {
             gameWindow.getCommunicator()
                     .send("HISCORE " + newScoreObj.username + ":" + newScoreObj.score);
@@ -268,10 +291,21 @@ public class ScoresScene extends BaseScene {
     }
 
     /**
+     * Handle key presses
+     */
+    public void onKeyPressed(KeyEvent keyEvent) {
+        var keyCode = keyEvent.getCode();
+        logger.info("Key pressed: " + keyCode);
+        switch (keyCode) {
+            case ESCAPE, SPACE -> gameWindow.startMenu();
+        }
+    }
+
+    /**
      * Represents the lists of scores displayed in this scene Extends GridPane, so that the lines
      * can be aligned properly
      */
-    class HiScoresList extends ScoresList {
+    private class HiScoresList extends ScoresList {
 
 
         public HiScoresList() {
@@ -371,16 +405,5 @@ public class ScoresScene extends BaseScene {
                     .toList());
         }
 
-    }
-
-    /**
-     * Handle key presses
-     */
-    public void onKeyPressed(KeyEvent keyEvent) {
-        var keyCode = keyEvent.getCode();
-        logger.info("Key pressed: " + keyCode);
-        switch (keyCode) {
-            case ESCAPE, SPACE -> gameWindow.startMenu();
-        }
     }
 }

@@ -2,6 +2,7 @@ package uk.ac.soton.comp1206.scene;
 
 import java.util.List;
 import java.util.UUID;
+import javafx.animation.Animation;
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
@@ -26,6 +27,7 @@ import javafx.scene.text.Text;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import uk.ac.soton.comp1206.App;
 import uk.ac.soton.comp1206.ui.GamePane;
 import uk.ac.soton.comp1206.ui.GameWindow;
 import uk.ac.soton.comp1206.utils.Multimedia;
@@ -54,62 +56,9 @@ public class MenuScene extends BaseScene {
     public MenuScene(GameWindow gameWindow) {
         super(gameWindow);
         logger.info("Creating Menu Scene");
+        gameWindow.getCommunicator().clearListeners();
     }
 
-    public void updateTitle() {
-        var writeableImage = new WritableImage(128, 64);
-        titleImg.snapshot(null, writeableImage);
-        title.setFill(javafx.scene.paint.Color.WHITE);
-        title.setOpacity(1);
-        var reader = writeableImage.getPixelReader();
-
-        StringBuilder text = new StringBuilder();
-
-        for (int y = 0; y < writeableImage.getHeight(); y += 4) {
-            for (int x = 0; x < writeableImage.getWidth(); x += 2) {
-                var color = reader.getColor(x, y);
-                if (color.getBrightness() > .1) {
-                    text.append("#");
-                } else {
-                    text.append(" ");
-                }
-
-            }
-            text.append("\n");
-        }
-
-        title.setText(text.toString());
-    }
-
-    private void makeTextTitle() {
-        titleBox.getChildren().add(titleImg);
-        titleBox.setAlignment(Pos.CENTER);
-        titleBox.setMaxHeight(100);
-        titleBox.setStyle("-fx-background-color: black;");
-        //mainPane.setLeft(titleBox);
-        RotateTransition rotateTitle = new RotateTransition(Duration.millis(1000), titleImg);
-        rotateTitle.setFromAngle(-10);
-        rotateTitle.setToAngle(10);
-        rotateTitle.setAutoReverse(true);
-        rotateTitle.setCycleCount(Timeline.INDEFINITE);
-        rotateTitle.play();
-
-        title = new Text();
-        title.getStyleClass().add("titleart");
-        var titleImgContainer = new HBox();
-        //titleImg.setFitWidth(400);
-        //titleImg.setPreserveRatio(true);
-        titleImgContainer.getChildren().add(title);
-        titleImgContainer.setAlignment(Pos.CENTER);
-        titleImgContainer.setPadding(new Insets(40, 20, 20, 20));
-        mainPane.setTop(titleImgContainer);
-
-        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(100),
-                event -> updateTitle()));
-
-        timeline.setCycleCount(Timeline.INDEFINITE);
-        timeline.play();
-    }
 
     private Node makeTitleImg(BorderPane parent) {
         var titleImg = new ImageView(Multimedia.getImage("TetrECS.png"));
@@ -153,7 +102,7 @@ public class MenuScene extends BaseScene {
 
         //var menuBox = new VBox();
         menuBox.setSpacing(0);
-        menuBox.setAlignment(Pos.CENTER);
+        menuBox.setAlignment(Pos.BOTTOM_CENTER);
         //menuBox.getStyleClass().add("menuItem");
         mainPane.setCenter(menuBox);
 
@@ -162,35 +111,37 @@ public class MenuScene extends BaseScene {
         var startSinglePlayer = new MenuItem("Single Player", this::startGame);
         menuItems.add(startSinglePlayer);
 
-        var multiplayer = new MenuItem("Multiplayer", e -> gameWindow.startLobby());
+        var multiplayer = new MenuItem("Multiplayer", this::startLobby);
         menuItems.add(multiplayer);
 
         var instructions = new MenuItem("Instructions", this::startInstructions);
         menuItems.add(instructions);
 
-        var settings = new MenuItem("Settings", null);
-        settings.setOnAction(e -> settings.setText("Coming soon"));
+        var highScores = new MenuItem("High Scores", this::startScores);
+        menuItems.add(highScores);
+
+        var settings = new MenuItem("Settings", this::startSettings);
         menuItems.add(settings);
 
-        var exit = new MenuItem("Exit", e -> gameWindow.exitGame());
+        var exit = new MenuItem("Exit", this::exit);
         menuItems.add(exit);
 
         menuSize = menuItems.size();
 
         backgroundPane.opacityProperty().set(0);
-        var backgroundFade = new FadeTransition(Duration.millis(1000), backgroundPane);
+        var backgroundFade = new FadeTransition(Duration.millis(2000), backgroundPane);
         backgroundFade.setFromValue(0);
         backgroundFade.setToValue(1);
         backgroundFade.play();
 
-        animate(titleImgContainer, 0, Duration.millis(400));
-        animate(startSinglePlayer, 500);
-        animate(multiplayer, 600);
-        animate(instructions, 700);
-        animate(settings, 800);
-        animate(exit, 900);
+        setupTitle(titleImgContainer);
 
+        int startDelay = 500;
 
+        for (Node node : menuItems) {
+            animate(node, startDelay);
+            startDelay += 100;
+        }
     }
 
     public void animate(Node node, int delay, Duration duration) {
@@ -200,7 +151,7 @@ public class MenuScene extends BaseScene {
         slideOn.setToY(0);
         slideOn.setInterpolator(Interpolator.LINEAR);
         slideOn.setDelay(Duration.millis(delay));
-        slideOn.setOnFinished(e -> Multimedia.playSound("hit1.wav"));
+        slideOn.setOnFinished(e -> beep());
         slideOn.play();
     }
 
@@ -208,32 +159,69 @@ public class MenuScene extends BaseScene {
         animate(node, delay, Duration.millis(500));
     }
 
+    public void setupTitle(Node title) {
+        TranslateTransition moveX = new TranslateTransition(Duration.millis(6400), title);
+        moveX.setFromX(-205);
+        moveX.setToX(205);
+        moveX.setInterpolator(Interpolator.LINEAR);
+        moveX.setCycleCount(Animation.INDEFINITE);
+        moveX.setAutoReverse(true);
+
+        TranslateTransition moveY = new TranslateTransition(Duration.millis(2700), title);
+        moveY.setFromY(95);
+        moveY.setToY(-65);
+        moveY.setInterpolator(Interpolator.EASE_IN);
+        moveY.setCycleCount(Animation.INDEFINITE);
+        moveY.setAutoReverse(true);
+
+        moveX.play();
+        moveY.play();
+
+        FadeTransition fade = new FadeTransition(Duration.millis(1000), title);
+        fade.setFromValue(0);
+        fade.setToValue(1);
+        fade.setDelay(Duration.millis(1000));
+
+        title.setOpacity(0);
+
+        fade.play();
+    }
+
     public void onKeyPress(KeyEvent keyEvent) {
         var keyCode = keyEvent.getCode();
         logger.info("Key pressed: " + keyCode);
         switch (keyCode) {
-            case ESCAPE -> gameWindow.exitGame();
-            case S -> gameWindow.startScores();
+            case ESCAPE -> exit();
+        }
+
+        // For testing
+
+        if (!App.DEBUG_MODE) {
+            return;
+        }
+
+        switch (keyCode) {
+            case S -> gameWindow.startScores(7654);
+            case DIGIT9 -> gameWindow.startScores(98765);
             case M -> {
                 var communicator = gameWindow.getCommunicator();
                 communicator.send("PART");
                 communicator.send("CREATE " + UUID.randomUUID());
-                //communicator.send("NICK " + "MyPlayer");
                 communicator.send("NICK " + UUID.randomUUID());
-                communicator.send("START");
+                javafx.beans.property.StringProperty myNick =
+                        new javafx.beans.property.SimpleStringProperty();
                 communicator.addListener((m) -> {
-                    if (m.equals("START")) Platform.runLater(
-                            () -> gameWindow.startMultiplayerGame(m));
+                    var split = m.split(" ", 2);
+                    if (split[0].equals("NICK")) {
+                        myNick.set(split[1]);
+                        communicator.send("START");
+                    }
                 });
-            }
-            case J -> {
-                var communicator = gameWindow.getCommunicator();
-                communicator.send("PART");
-                communicator.send("JOIN " + "a8d485f084bc984");
-                communicator.send("NICK " + "MyPlayer");
                 communicator.addListener((m) -> {
-                    if (m.equals("START")) Platform.runLater(
-                            () -> gameWindow.startMultiplayerGame(m));
+                    if (m.equals("START")) {
+                        Platform.runLater(() -> gameWindow.startMultiplayerGame(myNick.get()));
+                        communicator.clearListeners();
+                    }
                 });
             }
             case L -> gameWindow.startLobby();
@@ -250,7 +238,7 @@ public class MenuScene extends BaseScene {
                 return;
             }
         }
-        Multimedia.playSound("hit1.wav");
+        Multimedia.playSound("beep.wav");
         keyEvent.consume();
     }
 
@@ -285,6 +273,10 @@ public class MenuScene extends BaseScene {
         //menuIndex = -1;
     }
 
+    private void beep() {
+        Multimedia.playSound("beep.wav", 0.5);
+    }
+
     /**
      * Initialise the menu
      */
@@ -292,6 +284,10 @@ public class MenuScene extends BaseScene {
     public void initialise() {
         scene.setOnKeyPressed(this::onKeyPress);
         scene.addEventFilter(KeyEvent.KEY_PRESSED, this::onArrowPress);
+
+        if (!Multimedia.isPlayingMusic("menu.mp3")) {
+            Multimedia.fadeOutMusic(() -> Multimedia.startMusic("menu.mp3"));
+        }
     }
 
     /**
@@ -300,11 +296,38 @@ public class MenuScene extends BaseScene {
      * @param event event
      */
     private void startGame(ActionEvent event) {
+        beep();
         gameWindow.startChallenge();
     }
 
+    private void startLobby(ActionEvent event) {
+        beep();
+        gameWindow.startLobby();
+    }
+
+    private void startScores(ActionEvent event) {
+        beep();
+        gameWindow.startScores();
+    }
+
     private void startInstructions(ActionEvent event) {
+        beep();
         gameWindow.startInstructions();
+    }
+
+    private void startSettings(ActionEvent event) {
+        beep();
+        gameWindow.startSettings();
+    }
+
+    private void exit(ActionEvent event) {
+        exit();
+    }
+
+    private void exit() {
+        beep();
+        gameWindow.getCommunicator().send("QUIT");
+        gameWindow.exitGame();
     }
 
     public class MenuItem extends Button {

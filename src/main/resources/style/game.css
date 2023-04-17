@@ -35,7 +35,7 @@ Label {
 }
 
 .menu {
-    -fx-padding: 10;
+    -fx-padding: 0;
 }
 
 
@@ -269,7 +269,7 @@ Button .disabled {
 .menuItem {
     -fx-text-fill: white;
     -fx-border-style: hidden;
-    -fx-font-size: 32px;
+    -fx-font-size: 30px;
     -fx-background-color: none;
     -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
 }
@@ -280,10 +280,6 @@ Button .disabled {
 
 .menuItem.selected {
     -fx-text-fill: #7dd50b;
-}
-
-.menuItem.selected:hover {
-    -fx-text-fill: green;
 }
 
 .playerBox {

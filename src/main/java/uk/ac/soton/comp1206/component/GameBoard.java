@@ -11,7 +11,6 @@ import org.apache.logging.log4j.Logger;
 import uk.ac.soton.comp1206.event.BlockClickedListener;
 import uk.ac.soton.comp1206.event.BlockHoverEnterListener;
 import uk.ac.soton.comp1206.event.BlockHoverExitListener;
-import uk.ac.soton.comp1206.event.RightClickedListener;
 import uk.ac.soton.comp1206.game.Grid;
 import uk.ac.soton.comp1206.utils.Vector2;
 
@@ -62,10 +61,11 @@ public class GameBoard extends GridPane {
     /**
      * The listener to call when a specific block is clicked
      */
-    private BlockClickedListener blockClickedListener;
+    private BlockClickedListener blockLeftClickedListener;
+    private BlockClickedListener blockRightClickedListener;
+
     private BlockHoverEnterListener blockHoverEnterListener;
     private BlockHoverExitListener blockHoverExitListener;
-    private RightClickedListener rightClickedListener;
 
 
     /**
@@ -174,12 +174,31 @@ public class GameBoard extends GridPane {
     }
 
     /**
-     * Set the listener to handle an event when a block is clicked
+     * Set the listener to handle an event when a block is left-clicked
      *
      * @param listener listener to add
      */
-    public void setOnBlockClick(BlockClickedListener listener) {
-        this.blockClickedListener = listener;
+    public void setOnBlockLeftClick(BlockClickedListener listener) {
+        this.blockLeftClickedListener = listener;
+    }
+
+    /**
+     * Set the listener to handle an event when a block is right-clicked
+     *
+     * @param listener listener to add
+     */
+    public void setOnBlockRightClick(BlockClickedListener listener) {
+        this.blockRightClickedListener = listener;
+    }
+
+    /**
+     * Set the listener to handle an event when a block is clicked with either mouse button
+     *
+     * @param listener listener to add
+     */
+    public void setOnAnyBlockClick(BlockClickedListener listener) {
+        this.blockLeftClickedListener = listener;
+        this.blockRightClickedListener = listener;
     }
 
     /**
@@ -200,14 +219,7 @@ public class GameBoard extends GridPane {
         this.blockHoverExitListener = listener;
     }
 
-    /**
-     * Set the listener to handle an event when a block is right clicked
-     *
-     * @param listener listener to add
-     */
-    public void setOnRightClick(RightClickedListener listener) {
-        this.rightClickedListener = listener;
-    }
+
 
     /**
      * Triggered when a block is clicked. Call the attached listener.
@@ -217,14 +229,15 @@ public class GameBoard extends GridPane {
      */
     private void blockClicked(MouseEvent event, GameBlock block) {
 
-        if (blockClickedListener != null && event.getButton() == MouseButton.PRIMARY) {
-            logger.info("Block clicked: {}, {}", block.getX(), block.getX());
-            blockClickedListener.blockClicked(block);
-            event.consume();
-        } else if (rightClickedListener != null && event.getButton() == MouseButton.SECONDARY) {
-            logger.info("Block right clicked: {}, {}", block.getX(), block.getX());
+        if (blockLeftClickedListener != null && event.getButton() == MouseButton.PRIMARY) {
+            //logger.info("Block clicked: {}, {}", block.getX(), block.getX());
 
-            rightClickedListener.onRightClicked(block);
+            blockLeftClickedListener.blockClicked(block);
+            event.consume();
+        } else if (blockRightClickedListener != null && event.getButton() == MouseButton.SECONDARY) {
+            //logger.info("Block right clicked: {}, {}", block.getX(), block.getX());
+
+            blockRightClickedListener.blockClicked(block);
             event.consume();
         }
     }

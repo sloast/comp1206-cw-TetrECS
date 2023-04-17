@@ -22,15 +22,20 @@ public class Multimedia {
     private static final String MUSIC_PATH = "/music/";
     private static final String SOUND_PATH = "/sounds/";
     private static final String IMAGE_PATH = "/images/";
-
+    public static DoubleProperty musicVolume = new SimpleDoubleProperty(0.7);
+    public static DoubleProperty soundEffectVolume = new SimpleDoubleProperty(0.4);
+    public static DoubleProperty masterVolume = new SimpleDoubleProperty(0.5);
     private static MediaPlayer soundEffectPlayer;
     private static MediaPlayer musicPlayer;
-    private static MediaPlayer musicPlayer2;
+    // The upcoming music player is created in advance to avoid gaps
+    private static MediaPlayer nextMusicPlayer;
 
-    public static DoubleProperty musicVolume = new SimpleDoubleProperty(0.5);
-    public static DoubleProperty soundEffectVolume = new SimpleDoubleProperty(0.5);
-    public static DoubleProperty masterVolume = new SimpleDoubleProperty(0.8);
+    private static boolean doNotInterrupt = false;
 
+    public static boolean isPlayingMusic(String filename) {
+        return musicPlayer != null && musicPlayer.getMedia().getSource()
+                .equals(Multimedia.class.getResource(MUSIC_PATH + filename).toExternalForm());
+    }
 
     private static Media loadMusic(String filename) throws NullPointerException {
         return new Media(Multimedia.class.getResource(MUSIC_PATH + filename).toExternalForm());
@@ -41,114 +46,154 @@ public class Multimedia {
     }
 
     public static void startMusic(String filename) throws NullPointerException {
+        startMusic(filename, MediaPlayer.INDEFINITE);
+    }
+
+    public static void startMusic(String filename, int cycleCount) throws NullPointerException {
         if (musicPlayer != null) {
             musicPlayer.stop();
         }
+        logger.info(Colour.purple("Starting music: " + filename));
         musicPlayer = new MediaPlayer(loadMusic(filename));
         musicPlayer.volumeProperty().bind(masterVolume.multiply(musicVolume));
-        musicPlayer.setCycleCount(MediaPlayer.INDEFINITE);
+        musicPlayer.setCycleCount(cycleCount);
         musicPlayer.play();
     }
 
     public static void startMusicIntro(String intro, String mainLoop) throws NullPointerException {
-        if (musicPlayer != null) {
-            musicPlayer.stop();
+        startMusic(intro);
+        queueMusic(mainLoop, MediaPlayer.INDEFINITE);
+        musicPlayer.play();
+    }
+
+    public static void queueMusic(String filename, int cycleCount) throws NullPointerException {
+        if (musicPlayer == null) {
+            startMusic(filename);
+        } else {
+            musicPlayer.setOnEndOfMedia(Multimedia::playNextMusic);
+            musicPlayer.setCycleCount(1);
+
+            nextMusicPlayer = new MediaPlayer(loadMusic(filename));
+            nextMusicPlayer.setCycleCount(cycleCount);
         }
-        musicPlayer = new MediaPlayer(loadMusic(intro));
-        musicPlayer.volumeProperty().bind(masterVolume.multiply(musicVolume));
-        musicPlayer.setOnEndOfMedia(() -> {
-            startMusic(mainLoop);
+    }
+
+    public static void fadeOutMusic() {
+        fadeOutMusic(() -> {
         });
-        musicPlayer.play();
     }
 
-    public static void startMusic(String filename, String altFilename) throws NullPointerException {
-        if (musicPlayer != null) {
-            musicPlayer.stop();
-        }
-        musicPlayer = new MediaPlayer(loadMusic(filename));
-        musicPlayer.volumeProperty().bind(masterVolume.multiply(musicVolume));
-        musicPlayer.setCycleCount(MediaPlayer.INDEFINITE);
-        musicPlayer.play();
-
-        musicPlayer2 = new MediaPlayer(loadMusic(altFilename));
-        musicPlayer2.volumeProperty().set(0.);
-        musicPlayer2.setCycleCount(MediaPlayer.INDEFINITE);
-        musicPlayer2.play();
-    }
-
-    public static void startMusicIntro(String intro, String mainLoop, String altMainLoop)
-            throws NullPointerException {
-        startMusicIntro(intro, mainLoop);
-        musicPlayer2 = new MediaPlayer(loadMusic(altMainLoop));
-        musicPlayer2.volumeProperty().set(0.);
-        musicPlayer2.setCycleCount(MediaPlayer.INDEFINITE);
-        musicPlayer2.play();
-    }
-
-    public static void playSound(String filename) throws NullPointerException {
-        if (soundEffectPlayer != null) {
-            soundEffectPlayer.stop();
-        }
-        soundEffectPlayer = new MediaPlayer(loadSound(filename));
-        soundEffectPlayer.volumeProperty().bind(masterVolume.multiply(soundEffectVolume));
-        soundEffectPlayer.play();
-    }
-
-    public static void crossfadeMusic(Duration duration) throws NullPointerException {
-
-        if (musicPlayer == null || musicPlayer2 == null) {
-            logger.error("Cannot crossfade music when only one music track is playing");
-            return;
-        }
-
-        DoubleProperty volume1 = new SimpleDoubleProperty(musicVolume.get());
-        DoubleProperty volume2 = new SimpleDoubleProperty(0);
-
-        musicPlayer.volumeProperty().unbind();
-        musicPlayer.volumeProperty().bind(volume1);
-        musicPlayer2.volumeProperty().unbind();
-        musicPlayer2.volumeProperty().bind(volume2);
-
-        Timeline timeline = new Timeline(
-                new KeyFrame(Duration.ZERO,
-                        new KeyValue(volume1, 1)),
-                new KeyFrame(Duration.ZERO,
-                        new KeyValue(volume2, 0)),
-                new KeyFrame(duration,
-                        new KeyValue(volume1, 0)),
-                new KeyFrame(duration,
-                        new KeyValue(volume2, 1))
-        );
-
-        timeline.play();
-    }
-
-    public static void revertCrossfade() {
+    public static void fadeOutMusic(Runnable onFadeEnded) {
         if (musicPlayer != null) {
             musicPlayer.volumeProperty().unbind();
-            musicPlayer.volumeProperty().bind(masterVolume.multiply(musicVolume));
-        }
-        if (musicPlayer2 != null) {
-            musicPlayer2.volumeProperty().unbind();
-            musicPlayer2.volumeProperty().set(0.);
+
+            DoubleProperty volume = musicPlayer.volumeProperty();
+
+            double duration = 1000;
+
+            Timeline fadeOut = new Timeline(
+                    new KeyFrame(Duration.ZERO,
+                            new KeyValue(volume, volume.get())),
+                    new KeyFrame(Duration.millis(duration),
+                            new KeyValue(volume, 0)),
+                    new KeyFrame(Duration.millis(duration),
+                            event -> onFadeEnded.run())
+            );
+
+            fadeOut.play();
+        } else {
+            onFadeEnded.run();
         }
     }
+
+    public static void playNextMusic() {
+        if (nextMusicPlayer != null) {
+            if (musicPlayer != null) {
+                musicPlayer.stop();
+            }
+            musicPlayer = nextMusicPlayer;
+            musicPlayer.volumeProperty().bind(masterVolume.multiply(musicVolume));
+            musicPlayer.play();
+            nextMusicPlayer = null;
+        }
+    }
+
 
 
     /**
-     * There's no real reason for this enum, I just wanted to see if it worked
+     * Plays a sound effect after the specified delay
+     *
+     * @param filename the name of the file to play
+     * @param delay the delay before playing the sound
+     * @param highPriority if {@code true}, the sound cannot be interrupted by other sounds
+     * @throws NullPointerException if the file is not found
      */
-    public enum Category {
-        ALL, MUSIC, SOUND_EFFECT
+    public static void playSoundDelayed(String filename, double delay, double volume, boolean highPriority)
+            throws NullPointerException {
+        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(delay), event -> {
+            playSound(filename, volume, highPriority);
+        }));
+        timeline.play();
     }
+
+    /**
+     * Plays a sound effect
+     *
+     * @param filename the name of the file to play
+     * @throws NullPointerException if the file is not found
+     */
+    public static void playSound(String filename) throws NullPointerException {
+        playSound(filename, 1D, false);
+    }
+
+    /**
+     * Plays a sound effect
+     *
+     * @param filename the name of the file to play
+     * @param volume the volume of the sound
+     * @throws NullPointerException if the file is not found
+     */
+    public static void playSound(String filename, double volume) throws NullPointerException {
+        playSound(filename, volume, false);
+    }
+
+    /**
+     * Plays a sound effect
+     *
+     * @param filename the name of the file to play
+     * @param volume the volume of the sound
+     * @param highPriority if {@code true}, the sound cannot be interrupted by other sounds
+     *
+     * @throws NullPointerException if the file is not found
+     */
+    public static void playSound(String filename, double volume, boolean highPriority)
+            throws NullPointerException {
+        if (soundEffectPlayer != null) {
+            if (doNotInterrupt && !highPriority) {
+                return;
+            }
+            soundEffectPlayer.stop();
+        }
+        doNotInterrupt = highPriority;
+        soundEffectPlayer = new MediaPlayer(loadSound(filename));
+        soundEffectPlayer.volumeProperty()
+                .bind(masterVolume
+                        .multiply(soundEffectVolume)
+                        .multiply(volume)
+                );
+
+        soundEffectPlayer.setOnEndOfMedia(() -> doNotInterrupt = false);
+
+        soundEffectPlayer.play();
+    }
+
 
     /**
      * Stops music or sound effects
      *
      * @param category which type of sound to stop
      */
-    public static void stop(Category category) {
+    public static void stop(SoundCategory category) {
         switch (category) {
             case ALL:
                 if (soundEffectPlayer != null) {
@@ -176,5 +221,11 @@ public class Multimedia {
         return new Image(Multimedia.class.getResource(IMAGE_PATH + filename).toExternalForm());
     }
 
+    /**
+     * Which type of sound to stop
+     */
+    public enum SoundCategory {
+        ALL, MUSIC, SOUND_EFFECT
+    }
 
 }

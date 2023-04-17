@@ -27,4 +27,5 @@ public class OpponentBoard extends GameBoard {
     public StringProperty usernameProperty() {
         return username;
     }
+
 }

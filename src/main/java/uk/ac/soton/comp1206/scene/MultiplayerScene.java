@@ -1,6 +1,7 @@
 package uk.ac.soton.comp1206.scene;
 
 import java.util.HashMap;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -23,8 +24,9 @@ import uk.ac.soton.comp1206.utils.Multimedia;
 public class MultiplayerScene extends ChallengeScene {
 
     private static final Logger logger = LogManager.getLogger(MultiplayerScene.class);
+    private static final int NUM_OPPONENT_BOARDS = 5;
+    static boolean opponentBoardsEnabled = true;
     private final String myUsername;
-    private static final int NUM_OPPONENT_BOARDS = 3;
     private final HashMap<String, String> opponentBoardsMap = new HashMap<>();
     private final OpponentBoard[] opponentBoards = new OpponentBoard[NUM_OPPONENT_BOARDS];
     private Leaderboard leaderboard;
@@ -33,7 +35,6 @@ public class MultiplayerScene extends ChallengeScene {
      * Create a new Single Player challenge scene
      *
      * @param gameWindow the Game Window
-     * @param myUsername the username of the player
      */
     public MultiplayerScene(GameWindow gameWindow, String myUsername) {
         super(gameWindow);
@@ -57,9 +58,11 @@ public class MultiplayerScene extends ChallengeScene {
         setupGame();
 
         mainPane = setupMain("challenge-background");
-
-        board = new GameBoard(game.getGrid(), gameWindow.getWidth() / 2.,
-                gameWindow.getWidth() / 2.);
+        double boardRatio = 2.5;
+        board = new GameBoard(game.getGrid(),
+                gameWindow.getWidth() / boardRatio,
+                gameWindow.getWidth() / boardRatio
+        );
         mainPane.setCenter(board);
 
         VBox sideBar = new VBox();
@@ -107,7 +110,7 @@ public class MultiplayerScene extends ChallengeScene {
         var infoBox = new BorderPane();
         {
 
-            var scoresBox = new VBox();
+            var scoresBox = new HBox();
             {
                 var scoreBox = new HBox();
                 var scoreLabel = new Label("score ");
@@ -119,32 +122,35 @@ public class MultiplayerScene extends ChallengeScene {
                 scoreLabel.getStyleClass().add("regularlabel");
 
                 var highScoreBox = new HBox();
-                var highScoreLabel = new Label("hi-score ");
-                var highScore = new Label("10000");
-                highScoreBox.getChildren().addAll(highScoreLabel, highScore);
-                highScore.getStyleClass().add("hiscore");
+                var highScoreLabel = new Label("  hi-score ");
+                var highScoreText = new Label("0");
+                loadHighScore();
+                highScoreText.textProperty().bind(this.highScore.asString());
+                highScoreBox.getChildren().addAll(highScoreLabel, highScoreText);
+                highScoreText.getStyleClass().add("hiscore");
                 highScoreLabel.getStyleClass().add("smalllabel");
+                highScoreBox.setAlignment(Pos.CENTER_LEFT);
 
-                var levelBox = new HBox();
+                /*var levelBox = new HBox();
                 var levelLabel = new Label("level ");
                 var level = new Label("0");
                 level.textProperty().bind(game.level.asString());
                 levelBox.getChildren().addAll(levelLabel, level);
                 level.getStyleClass().add("level");
-                levelLabel.getStyleClass().add("smalllabel");
+                levelLabel.getStyleClass().add("smalllabel");*/
 
-                scoresBox.getChildren().addAll(scoreBox, highScoreBox, levelBox);
+                scoresBox.getChildren().addAll(scoreBox, highScoreBox);//, levelBox);
             }
+            scoresBox.setAlignment(Pos.CENTER_LEFT);
             infoBox.setLeft(scoresBox);
 
-            var multiplierBox = new HBox();
-            var multiplier = new Label("1");
-            var multiplierX = new Label("x");
-            multiplier.getStyleClass().add("multiplier");
-            multiplierX.getStyleClass().add("regularlabel");
-            multiplier.textProperty().bind(game.multiplier.asString());
+            multiplierBox = new HBox();
+            multiplierBox.setAlignment(Pos.CENTER);
+            var multiplierText = new Label("1");
+            multiplierText.getStyleClass().add("multiplier");
+            multiplierText.textProperty().bind(game.multiplier.asString().concat("x"));
 
-            multiplierBox.getChildren().addAll(multiplier, multiplierX);
+            multiplierBox.getChildren().add(multiplierText);
             infoBox.setRight(multiplierBox);
 
 
@@ -158,7 +164,7 @@ public class MultiplayerScene extends ChallengeScene {
         {
             for (int i = 0; i < game.MAX_LIVES; i++) {
                 livesContainer.getChildren()
-                        .add(new ImageView(Multimedia.getImage("heart_small.png", 80)));
+                        .add(new ImageView(Multimedia.getImage("heart.png", 80)));
             }
 
             livesContainer.alignmentProperty().set(Pos.CENTER);
@@ -174,9 +180,11 @@ public class MultiplayerScene extends ChallengeScene {
         timerContainer.getChildren().add(timer);
         timerContainer.setAlignment(Pos.CENTER);
         mainPane.setBottom(timerContainer);
-        HBox.setMargin(timer, new Insets(20, 0, 20, 0));
+        HBox.setMargin(timer, new Insets(10, 0, 0, 0));
 
-        setupMultiplayerBoards();
+        if (opponentBoardsEnabled) {
+            setupMultiplayerBoards();
+        }
     }
 
     /**
@@ -188,17 +196,39 @@ public class MultiplayerScene extends ChallengeScene {
         var split = communication.split(" ", 2);
 
         var command = split[0];
-        var message = split[1];
+        var message = "";
+        if (split.length > 1) {
+            message = split[1];
+        }
 
         switch (command) {
             case "SCORES" -> leaderboard.setScores(message);
             case "SCORE" -> leaderboard.updateScore(message);
             case "BOARD" -> {
-                var messageSplit = message.split(":", 2);
-                var username = messageSplit[0];
-                var board = messageSplit[1];
-                opponentBoardsMap.put(username, board);
-                updateOpponentBoards();
+                if (opponentBoardsEnabled) {
+                    var messageSplit = message.split(":", 2);
+                    var username = messageSplit[0];
+                    var board = messageSplit[1];
+                    opponentBoardsMap.put(username, board);
+                    Platform.runLater(this::updateOpponentBoards);
+                }
+            }
+            case "DIE" -> {
+                leaderboard.setDead(message);
+                if (opponentBoardsEnabled) {
+                    // make the board of the dead player grey
+                    String board = opponentBoardsMap.get(message);
+                    if (board != null) {
+                        var boardSplit = board.split(" ");
+                        for (int i = 0; i < boardSplit.length; i++) {
+                            if (!boardSplit[i].equals("0")) {
+                                boardSplit[i] = "16";
+                            }
+                        }
+                        opponentBoardsMap.put(message, String.join(" ", boardSplit));
+                        Platform.runLater(this::updateOpponentBoards);
+                    }
+                }
             }
         }
     }
@@ -210,20 +240,27 @@ public class MultiplayerScene extends ChallengeScene {
 
     private void setupMultiplayerBoards() {
 
+        double boardSize = .13;
+
         VBox bottomBar = new VBox();
         HBox boardsContainer = new HBox();
         boardsContainer.setSpacing(10);
-        bottomBar.getChildren().addAll(timer, boardsContainer);
+        bottomBar.getChildren().addAll(boardsContainer, timer.getParent());
         mainPane.setBottom(bottomBar);
 
         for (int i = 0; i < NUM_OPPONENT_BOARDS; i++) {
             var boardContainer = new VBox();
-            var board = new OpponentBoard(new Grid(5, 5), gameWindow.getWidth() / 2.,
-                    gameWindow.getWidth() / 2.);
+            var board = new OpponentBoard(
+                    new Grid(5, 5),
+                    gameWindow.getWidth() * boardSize,
+                    gameWindow.getWidth() * boardSize
+            );
+            boardContainer.setVisible(false);
             opponentBoards[i] = board;
             var boardLabel = new Label("[unbound]");
+            boardLabel.setMaxWidth(gameWindow.getWidth() * boardSize);
             boardLabel.textProperty().bind(board.usernameProperty());
-            boardLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: white;");
+            boardLabel.setStyle("-fx-font-size: 15px; -fx-text-fill: white;");
             boardContainer.getChildren().addAll(boardLabel, board);
             boardsContainer.getChildren().add(boardContainer);
         }
@@ -237,6 +274,7 @@ public class MultiplayerScene extends ChallengeScene {
             if (board != null) {
                 opponentBoards[i].setContents(username, board);
             }
+            opponentBoards[i].getParent().setVisible(board != null);
         }
     }
 }

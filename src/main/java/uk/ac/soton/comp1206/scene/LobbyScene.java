@@ -178,8 +178,10 @@ public class LobbyScene extends BaseScene {
     }
 
     private void exit() {
-        communicator.send("QUIT");
-        executor.shutdown();
+        communicator.send("PART");
+        if (executor != null) {
+            executor.shutdown();
+        }
         gameWindow.startMenu();
     }
 
@@ -247,7 +249,7 @@ public class LobbyScene extends BaseScene {
 
             case "START" -> {
                 logger.info("The game has started in #" + currentChannel);
-                chatWindow.addSystemMessage("Game starting...");
+                chatWindow.addSystemMessage("Game is now starting...");
                 Platform.runLater(() -> gameWindow.startMultiplayerGame(chatWindow.username.get()));
             }
 
@@ -412,7 +414,7 @@ public class LobbyScene extends BaseScene {
                 String style = user.equals(username.get()) ?
                         Message.getMyStyle() : Message.getUserStyle(user);
                 label.setStyle(style);
-                logger.info("User style: " + style);
+                //logger.info("User style: " + style);
                 labels.add(label);
 
                 var separator = new Label(", ");
@@ -442,7 +444,7 @@ public class LobbyScene extends BaseScene {
         }
 
         public void addMessage(Message message) {
-            logger.info("Adding message: " + message);
+            logger.info(Colour.green("Adding message: " + message.toString()));
 
             int row = messages.size();
             messages.add(message);
@@ -526,6 +528,10 @@ public class LobbyScene extends BaseScene {
             var command = split[0].substring(1).toLowerCase();
             String argument = split.length > 1 ? split[1].strip() : null;
             argument = argument == null || argument.isBlank() ? null : argument;
+
+            if (argument != null && argument.startsWith("\\/")) {
+                argument = argument.substring(1);
+            }
 
             logger.info("Executing command: " + Colour.cyan(command) + " " + (argument == null ? ""
                     : Colour.cyan(argument)));

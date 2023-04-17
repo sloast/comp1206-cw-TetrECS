@@ -52,7 +52,9 @@ public class MultiplayerGame extends Game {
     @Override
     public void loseLife() {
         super.loseLife();
-        communicator.send("LIVES " + lives.get());
+        if (lives.get() >= 0) {
+            communicator.send("LIVES " + lives.get());
+        }
     }
 
     @Override

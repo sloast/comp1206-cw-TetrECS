@@ -16,10 +16,11 @@ import uk.ac.soton.comp1206.component.GameBlock;
 import uk.ac.soton.comp1206.event.GameLoopListener;
 import uk.ac.soton.comp1206.event.GameOverListener;
 import uk.ac.soton.comp1206.event.LineClearedListener;
-import uk.ac.soton.comp1206.event.NextPieceListener;
+import uk.ac.soton.comp1206.event.PieceBoardUpdateListener;
 import uk.ac.soton.comp1206.utils.Colour;
 import uk.ac.soton.comp1206.utils.Colour.TextColour;
 import uk.ac.soton.comp1206.utils.Colour.TextMode;
+import uk.ac.soton.comp1206.utils.Multimedia;
 import uk.ac.soton.comp1206.utils.Vector2;
 
 /**
@@ -29,12 +30,18 @@ import uk.ac.soton.comp1206.utils.Vector2;
  */
 public class Game {
 
-    private static final Logger logger = LogManager.getLogger(Game.class);
-
-    /** Using the internal timer keeps the logic more separated from the UI
-     * but the speedup button doesn't work properly, so it is currently disabled
+    /**
+     * Whether to use the internal timer or not. If false, the game will use the timer from the UI
      */
     public static final boolean USE_INTERNAL_TIMER = false;
+
+    // Using the internal timer keeps the logic more separated from the UI
+    // but the speedup button doesn't work properly, so it is currently disabled
+    /**
+     * The number of lives the player starts with
+     */
+    public static final int MAX_LIVES = 3;
+    private static final Logger logger = LogManager.getLogger(Game.class);
     /**
      * Number of rows
      */
@@ -48,35 +55,48 @@ public class Game {
      */
     final Grid grid;
     private final Random random = new Random();
-    public int MAX_LIVES = 3;
-    public boolean usingKeyboard = false;
+    private final Queue<Integer> pieceQueue = new LinkedList<>();
+    /**
+     * The block that is currently selected
+     */
     public GameBlock hoveredBlock = null;
-    public GameBlock lastHoveredBlock = null;
 
     // Properties that the UI can bind to
+    /**
+     * The number of lives the player has left
+     */
     public IntegerProperty lives = new SimpleIntegerProperty(3);
+
+    /**
+     * The current level (player gains 1 level per 1000 points)
+     */
     public IntegerProperty level = new SimpleIntegerProperty(0);
+
+    /**
+     * The current multiplier
+     */
     public IntegerProperty multiplier = new SimpleIntegerProperty(1);
+
+    /**
+     * The current score
+     */
     public IntegerProperty score = new SimpleIntegerProperty(0);
-
-    // Listeners
-    protected NextPieceListener nextPieceListener;
-    protected LineClearedListener lineClearedListener;
-    protected GameOverListener gameOverListener;
-    protected GameLoopListener gameLoopListener;
-
-    // Game actions are only allowed while the game is running
-    boolean running = false;
-
     // Pieces
     GamePiece currentPiece = null;
     GamePiece nextPiece = null;
-    private final Queue<Integer> pieceQueue = new LinkedList<>();
-
+    // Whether the player is currently controlling the game with the keyboard
+    private boolean usingKeyboard = false;
+    // Listeners
+    private PieceBoardUpdateListener pieceBoardUpdateListener;
+    private LineClearedListener lineClearedListener;
+    private GameOverListener gameOverListener;
+    private GameLoopListener gameLoopListener;
+    // Game actions are only allowed while the game is running
+    private boolean running = false;
     // Timer
-    Timer timer;
-    double startTime;
-    boolean timerFast = false;
+    private Timer timer;
+    private double startTime;
+    private boolean timerFast = false;
 
 
     /**
@@ -117,7 +137,10 @@ public class Game {
         nextPiece();
     }
 
-
+    /**
+     * Reduce the player's life count by one and reset the timer, or end the game if they have run
+     * out
+     */
     public void loseLife() {
         lives.set(lives.get() - 1);
         if (lives.get() < 0) {
@@ -132,13 +155,16 @@ public class Game {
     /**
      * When the player loses all their lives
      */
-    public void onDied() {
+    private void onDied() {
         running = false;
         logger.info(Colour.colour("Game over!", TextColour.PURPLE, TextMode.BOLD));
 
         stop();
     }
 
+    /**
+     * End the game and reset the grid
+     */
     public void stop() {
         logger.info(Colour.colour("Game stopped.", TextColour.PURPLE, TextMode.BOLD));
 
@@ -154,6 +180,11 @@ public class Game {
         gameOverListener.onGameOver();
     }
 
+    /**
+     * Returns the current score
+     *
+     * @return the current score
+     */
     public int getScore() {
         return score.get();
     }
@@ -189,6 +220,11 @@ public class Game {
         };
     }
 
+    /**
+     * Sets whether the timer is sped up or not
+     *
+     * @param fast if {@code true}, the timer will be sped up by 4x
+     */
     public void setTimerSpeed(boolean fast) {
 
         if (fast != timerFast) {
@@ -223,13 +259,19 @@ public class Game {
         //Place the piece
         if (grid.canPlayPiece(currentPiece, x, y)) {
             grid.playPiece(currentPiece, x, y);
+            Multimedia.playSound("place.wav");
             nextPiece();
             afterPiece();
             resetTimer();
             refreshPreview();
+        } else {
+            Multimedia.playSound("fail.wav");
         }
     }
 
+    /**
+     * Play a piece on the currently selected block
+     */
     public void keyboardPlayPiece() {
         if (hoveredBlock != null) { // && usingKeyboard) {
             this.blockClicked(hoveredBlock);
@@ -264,7 +306,6 @@ public class Game {
             return;
         }
 
-        lastHoveredBlock = hoveredBlock;
         hoveredBlock = null;
         gameBlock.hoverExit();
         refreshPreview();
@@ -278,7 +319,7 @@ public class Game {
             return;
         }
 
-        logger.info("Rotating current piece");
+        //.info("Rotating current piece");
 
         currentPiece.rotate();
         refreshPreview();
@@ -292,7 +333,7 @@ public class Game {
             return;
         }
 
-        logger.info("Rotating current piece");
+        //logger.info("Rotating current piece");
 
         for (int i = 0; i < 3; i++) {
             currentPiece.rotate();
@@ -462,13 +503,13 @@ public class Game {
      * Update the pieceBoard UI components on the current held pieces
      */
     private void updatePieceBoards() {
-        if (nextPieceListener != null) {
-            nextPieceListener.onNextPiece(currentPiece, nextPiece);
+        if (pieceBoardUpdateListener != null) {
+            pieceBoardUpdateListener.onNextPiece(currentPiece, nextPiece);
         }
     }
 
-    public void setOnNextPiece(NextPieceListener nextPieceListener) {
-        this.nextPieceListener = nextPieceListener;
+    public void setOnPieceBoardUpdate(PieceBoardUpdateListener pieceBoardUpdateListener) {
+        this.pieceBoardUpdateListener = pieceBoardUpdateListener;
     }
 
     public void setOnLineCleared(LineClearedListener lineClearedListener) {
@@ -530,6 +571,11 @@ public class Game {
 
     }
 
+    /**
+     * Selects a block using the keyboard
+     *
+     * @param block the block that was selected
+     */
     public void hoverBlockKeyboard(GameBlock block) {
         if (block == null) {
             return;
@@ -549,15 +595,29 @@ public class Game {
         refreshPreview();
     }
 
-
+    /**
+     * Check if the game has started
+     *
+     * @return true if the game is running
+     */
     public boolean isRunning() {
         return running;
     }
 
+    /**
+     * Get the timer duration for the current level
+     *
+     * @return timer duration in milliseconds
+     */
     public long getTimerDelayMillis() {
         return Math.max(2500, 12000 - 500 * level.get());
     }
 
+    /**
+     * Get the timer duration for the current level
+     *
+     * @return timer duration, as a {@link Duration}
+     */
     public Duration getTimerDelay() {
         return Duration.millis(getTimerDelayMillis());
     }

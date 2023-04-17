@@ -57,7 +57,8 @@ public class GameBlock extends Canvas {
             Color.MEDIUMPURPLE,
             Color.PURPLE,
 
-            // For invalid placement
+            // For dead players
+            Color.GRAY,
 
     };
     protected static final HashMap<Pair<Integer, Boolean>, Image> imageCache = new HashMap<>();
@@ -80,7 +81,8 @@ public class GameBlock extends Canvas {
      * The value of this block (0 = empty, otherwise specifies the colour to render as)
      */
     private final IntegerProperty value = new SimpleIntegerProperty(0);
-    private int corner_radius = 25;
+    private double corner_radius = 25;
+    private boolean isPivot = false;
 
     /**
      * Create a new single Game Block
@@ -165,6 +167,10 @@ public class GameBlock extends Canvas {
         if (hovered.get()) {
             // paintHover();
         }
+
+        if (isPivot) {
+            paintPivot();
+        }
     }
 
     /**
@@ -197,7 +203,7 @@ public class GameBlock extends Canvas {
      *
      * @param color the color to paint the block with
      */
-    protected void paintImage(Color color) {
+    private void paintImage(Color color) {
 
         var key = new Pair<>(value.get(), hovered.get());
         if (imageCache.containsKey(key)) {
@@ -257,6 +263,23 @@ public class GameBlock extends Canvas {
         //gc.strokeRoundRect(0, 0, width, height, CORNER_RADIUS, CORNER_RADIUS);
 
         paintImage((Color) colour);
+    }
+
+    private void paintPivot() {
+        double pivotWidth = width / 5;
+        double pivotHeight = height / 5;
+
+        var gc = getGraphicsContext2D();
+
+        gc.setFill(Color.rgb(150, 150, 150, 0.75));
+        gc.fillRoundRect(
+                width / 2 - pivotWidth / 2,
+                height / 2 - pivotHeight / 2,
+                pivotWidth,
+                pivotHeight,
+                corner_radius/3,
+                corner_radius/3
+        );
     }
 
     /**
@@ -320,6 +343,14 @@ public class GameBlock extends Canvas {
     }
 
     /**
+     * Set this block as the pivot block (i.e. draw a dot in the centre)
+     */
+    public void setPivot() {
+        this.isPivot = true;
+        this.paint();
+    }
+
+    /**
      * Animate the block being cleared
      *
      * @param parent the parent pane to draw the animation on
@@ -337,7 +368,7 @@ public class GameBlock extends Canvas {
             val = -1 - val;
         }
 
-        logger.info("Fading out block at " + x + ", " + y + " with value " + value.get());
+        //logger.info("Fading out block at " + x + ", " + y + " with value " + value.get());
 
         var child = new GameBlock(null, x, y, width, height);
         child.value.set(val);
@@ -386,7 +417,10 @@ public class GameBlock extends Canvas {
         fadeOut.setToValue(0);
         fadeOut.setInterpolator(Interpolator.EASE_IN);
 
-        appear.setOnFinished(e -> fadeOut.play());
+        appear.setOnFinished(e -> {
+            fadeOut.play();
+            Multimedia.playSound("clear.wav");
+        });
         fadeOut.setOnFinished(e -> parent.getChildren().remove(rect));
 
         parent.getChildren().add(child);

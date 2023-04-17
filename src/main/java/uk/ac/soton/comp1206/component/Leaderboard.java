@@ -89,6 +89,18 @@ public class Leaderboard extends ScoresList {
         });
     }
 
+    public void setDead(String username) {
+        Platform.runLater(() -> {
+            for (Score s : scores) {
+                if (s.username.equals(username)) {
+                    s.type = ScoreType.DIED;
+                    break;
+                }
+            }
+            rebuild();
+        });
+    }
+
     /**
      * Returns the scores as a list of strings
      *

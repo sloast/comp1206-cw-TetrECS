@@ -9,7 +9,6 @@ import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextArea;
 import javafx.stage.Stage;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import uk.ac.soton.comp1206.ui.GameWindow;
@@ -69,7 +68,7 @@ public class App extends Application {
     private void eula() {
         try {
             String content = Files.readString(Path.of(
-                    App.class.getResource("/style/eula.txt").getPath().substring(1)));
+                    App.class.getResource("/misc/eula.txt").getPath().substring(1)));
             var alert = new Alert(AlertType.WARNING);
             alert.getButtonTypes().clear();
             alert.getButtonTypes().add(new ButtonType("I agree", ButtonData.OK_DONE));

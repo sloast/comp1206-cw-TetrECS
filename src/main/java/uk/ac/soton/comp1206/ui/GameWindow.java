@@ -18,6 +18,7 @@ import uk.ac.soton.comp1206.scene.LobbyScene;
 import uk.ac.soton.comp1206.scene.MenuScene;
 import uk.ac.soton.comp1206.scene.MultiplayerScene;
 import uk.ac.soton.comp1206.scene.ScoresScene;
+import uk.ac.soton.comp1206.scene.SettingsScene;
 import uk.ac.soton.comp1206.scene.SplashScene;
 
 /**
@@ -121,8 +122,12 @@ public class GameWindow {
         loadScene(new InstructionsScene(this));
     }
 
+    public void startSettings() {
+        loadScene(new SettingsScene(this));
+    }
+
     public void startScores() {
-        loadScene(new ScoresScene(this, 4567));
+        loadScene(new ScoresScene(this));
     }
 
     public void startScores(int score) {

@@ -58,7 +58,6 @@ public class Communicator {
                 public void onPingFrame(WebSocket webSocket, WebSocketFrame webSocketFrame)
                         throws Exception {
                     logger.info("Ping? Pong!");
-                    //logger.info("latency: " + webSocketFrame.getPayloadText());
                 }
             });
 

@@ -1,17 +1,29 @@
 package uk.ac.soton.comp1206.scene;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
+import javafx.animation.ParallelTransition;
+import javafx.animation.RotateTransition;
 import javafx.animation.ScaleTransition;
 import javafx.animation.Timeline;
+import javafx.animation.Transition;
+import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -37,7 +49,6 @@ import uk.ac.soton.comp1206.game.Game;
 import uk.ac.soton.comp1206.ui.GameWindow;
 import uk.ac.soton.comp1206.utils.Colour;
 import uk.ac.soton.comp1206.utils.Multimedia;
-import uk.ac.soton.comp1206.utils.Multimedia.Category;
 import uk.ac.soton.comp1206.utils.Vector2;
 
 /**
@@ -45,8 +56,11 @@ import uk.ac.soton.comp1206.utils.Vector2;
  * game.
  */
 public class ChallengeScene extends BaseScene {
-    
+
     private static final Logger logger = LogManager.getLogger(ChallengeScene.class);
+    public static boolean disableTimerActions = false;
+    final IntegerProperty displayedScore = new SimpleIntegerProperty(0);
+    final IntegerProperty highScore = new SimpleIntegerProperty(0);
     public PieceBoard currentPieceBoard;
     public PieceBoard nextPieceBoard;
     public ScheduledExecutorService gameTimer;
@@ -55,9 +69,8 @@ public class ChallengeScene extends BaseScene {
     GameBoard board;
     VBox livesContainer;
     GameTimer timer;
-    public static boolean disableTimerActions = false;
-    final IntegerProperty displayedScore = new SimpleIntegerProperty(0);
-
+    HBox multiplierBox;
+    private Transition multiplierTransition;
 
     /**
      * Create a new Single Player challenge scene
@@ -121,9 +134,11 @@ public class ChallengeScene extends BaseScene {
 
                 var highScoreBox = new HBox();
                 var highScoreLabel = new Label("hi-score ");
-                var highScore = new Label("10000");
-                highScoreBox.getChildren().addAll(highScoreLabel, highScore);
-                highScore.getStyleClass().add("hiscore");
+                var highScoreText = new Label("0");
+                loadHighScore();
+                highScoreText.textProperty().bind(this.highScore.asString());
+                highScoreBox.getChildren().addAll(highScoreLabel, highScoreText);
+                highScoreText.getStyleClass().add("hiscore");
                 highScoreLabel.getStyleClass().add("smalllabel");
 
                 var levelBox = new HBox();
@@ -138,14 +153,13 @@ public class ChallengeScene extends BaseScene {
             }
             infoBox.setLeft(scoresBox);
 
-            var multiplierBox = new HBox();
-            var multiplier = new Label("1");
-            var multiplierX = new Label("x");
-            multiplier.getStyleClass().add("multiplier");
-            multiplierX.getStyleClass().add("regularlabel");
-            multiplier.textProperty().bind(game.multiplier.asString());
+            multiplierBox = new HBox();
+            multiplierBox.setAlignment(Pos.CENTER);
+            var multiplierText = new Label("1");
+            multiplierText.getStyleClass().add("multiplier");
+            multiplierText.textProperty().bind(game.multiplier.asString().concat("x"));
 
-            multiplierBox.getChildren().addAll(multiplier, multiplierX);
+            multiplierBox.getChildren().add(multiplierText);
             infoBox.setRight(multiplierBox);
 
 
@@ -159,7 +173,7 @@ public class ChallengeScene extends BaseScene {
         {
             for (int i = 0; i < game.MAX_LIVES; i++) {
                 livesContainer.getChildren()
-                        .add(new ImageView(Multimedia.getImage("heart_small.png", 80)));
+                        .add(new ImageView(Multimedia.getImage("heart.png", 80)));
             }
 
             livesContainer.alignmentProperty().set(Pos.CENTER);
@@ -207,7 +221,17 @@ public class ChallengeScene extends BaseScene {
      * For when the right mouse button is pressed or e pressed
      */
     protected void rotateCurrentPiece(GameBlock ignored) {
+        rotateCurrentPiece();
+    }
+
+    protected void rotateCurrentPiece() {
+        Multimedia.playSound("rotate.wav", 0.5);
         game.rotateCurrentPiece();
+    }
+
+    protected void rotateCurrentPieceCounterClockwise() {
+        Multimedia.playSound("rotate.wav", 0.5);
+        game.rotateCurrentPieceCounterClockwise();
     }
 
     /**
@@ -228,26 +252,71 @@ public class ChallengeScene extends BaseScene {
         disableTimerActions = Game.USE_INTERNAL_TIMER;
     }
 
+    void loadHighScore() {
+        highScore.set(10000);
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader("scores.txt"));
+            String line = reader.readLine();
+            highScore.set(Integer.parseInt(line.split(":")[1].trim()));
+        } catch (Exception e) {
+            logger.error(Colour.error("Error reading high score: " + e));
+            logger.info(Colour.cyan("Creating template scores file..."));
+
+            try {
+                Path defaultScoreFile = Path.of(Objects.requireNonNull(
+                        ChallengeScene.class.getResource("/misc/default-scores.txt")).toURI());
+                List<String> defaultScores = Files.readAllLines(defaultScoreFile);
+
+                Files.write(Path.of("scores.txt"), defaultScores);
+
+                logger.info(Colour.cyan("Template scores file created"));
+
+            } catch (Exception ex) {
+                logger.error(Colour.error("Error creating template scores file: " + ex));
+            }
+        }
+    }
+
     /**
      * Initialise the scene and start the game
      */
     @Override
     public void initialise() {
-        logger.info(Colour.cyan("Initialising Challenge"));
+        logger.info("Initialising Challenge");
 
         // Set up event listeners
         game.setOnLineCleared(s -> board.lineCleared(s, mainPane));
-        game.setOnNextPiece((nextPiece, followingPiece) -> {
+        game.setOnPieceBoardUpdate((nextPiece, followingPiece) -> {
             this.currentPieceBoard.setPiece(nextPiece);
             this.nextPieceBoard.setPiece(followingPiece);
         });
         game.setOnGameOver(this::gameOver);
-        game.setOnGameLoop(timer::reset);
+        game.setOnGameLoop(this.timer::reset);
+
+        // Play sound on new level
+        game.level.addListener((observable, oldValue, newValue) -> {
+            if (newValue.intValue() > oldValue.intValue()) {
+                Multimedia.playSoundDelayed("level.wav", 300, 1, true);
+            }
+        });
+
+        game.multiplier.addListener(this::onMultiplierChanged);
+
+        this.displayedScore.addListener(new ChangeListener<>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue,
+                    Number newValue) {
+                if (newValue.intValue() > highScore.get()) {
+                    highScore.bind(displayedScore);
+                    ChallengeScene.this.displayedScore.removeListener(this);
+                }
+            }
+        });
 
         mainPane.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
             if (e.getButton() == MouseButton.SECONDARY) {
                 game.rotateCurrentPiece();
-                logger.info(Colour.orange("Intercepted right click"));
+                //logger.info(Colour.orange("Intercepted right click"));
                 e.consume();
             }
         });
@@ -255,22 +324,19 @@ public class ChallengeScene extends BaseScene {
         scene.setOnKeyPressed(this::onKeyPress);
 
         // To update the lives HUD element
-        game.lives.addListener(this::onLifeChange);
+        game.lives.addListener(this::onLivesChanged);
 
         // Handle block on GameBoard grid being clicked
-        board.setOnBlockClick(this::blockClicked);
+        board.setOnBlockLeftClick(this::blockClicked);
+        board.setOnBlockRightClick(this::rotateCurrentPiece);
         board.setOnBlockHoverEnter(this::blockHoverEnter);
         board.setOnBlockHoverExit(this::blockHoverExit);
-        board.setOnRightClick(this::rotateCurrentPiece);
 
         // Handle PieceBoard being clicked
-        currentPieceBoard.setOnRightClick(this::rotateCurrentPiece);
-        currentPieceBoard.setOnBlockClick(this::rotateCurrentPiece);
-        nextPieceBoard.setOnBlockClick(this::swapCurrentPiece);
-        nextPieceBoard.setOnRightClick(this::swapCurrentPiece);
+        currentPieceBoard.setOnAnyBlockClick(this::rotateCurrentPiece);
+        nextPieceBoard.setOnAnyBlockClick(this::swapCurrentPiece);
 
-        Multimedia.startMusicIntro("game_start.wav", "game.wav");
-        Multimedia.musicVolume.set(0);
+        Multimedia.fadeOutMusic(() -> Multimedia.startMusicIntro("game_start.wav", "game.wav"));
 
         scene.addEventFilter(KeyEvent.KEY_RELEASED, e -> {
             if (e.getCode() == KeyCode.SHIFT) {
@@ -291,14 +357,14 @@ public class ChallengeScene extends BaseScene {
      */
     private void onKeyPress(KeyEvent event) {
         var keyCode = event.getCode();
-        logger.info("Key pressed: " + keyCode);
+        //logger.info("Key pressed: " + keyCode);
         switch (keyCode) {
             case LEFT, A -> onArrowKeyPressed(Vector2.left());
             case RIGHT, D -> onArrowKeyPressed(Vector2.right());
             case DOWN, S -> onArrowKeyPressed(Vector2.down());
             case UP, W -> onArrowKeyPressed(Vector2.up());
-            case E, C, CLOSE_BRACKET -> game.rotateCurrentPiece();
-            case Q, Z, OPEN_BRACKET -> game.rotateCurrentPieceCounterClockwise();
+            case E, C, CLOSE_BRACKET -> rotateCurrentPiece();
+            case Q, Z, OPEN_BRACKET -> rotateCurrentPieceCounterClockwise();
             case R, SPACE -> game.swapPieces();
             case ENTER -> game.keyboardPlayPiece();
             case SHIFT -> timer.speedUp(true);
@@ -314,7 +380,7 @@ public class ChallengeScene extends BaseScene {
      */
     private void testingKeyBinds(KeyEvent event) {
         var keyCode = event.getCode();
-        logger.info(Colour.orange("Debug key pressed: " + keyCode));
+        //logger.info(Colour.orange("Debug key pressed: " + keyCode));
         switch (keyCode) {
             case NUMBER_SIGN -> game.resetBoard();
             case N -> game.nextPiece();
@@ -327,19 +393,115 @@ public class ChallengeScene extends BaseScene {
     /**
      * Update UI when player loses a life
      */
-    private void onLifeChange(ObservableValue<? extends Number> observableValue, Number oldValue,
+    private void onLivesChanged(ObservableValue<? extends Number> observableValue, Number oldValue,
             Number newValue) {
         logger.info(Colour.purple("Lives changed from " + oldValue + " to " + newValue));
         int max = game.MAX_LIVES;
         for (int i = 0; i < max; i++) {
             if (i < newValue.intValue()) {
                 ((ImageView) livesContainer.getChildren().get(max - i - 1)).setImage(
-                        Multimedia.getImage("heart_small.png", 80));
+                        Multimedia.getImage("heart.png", 80));
             } else {
                 ((ImageView) livesContainer.getChildren().get(max - i - 1)).setImage(
-                        Multimedia.getImage("heart_small_empty.png", 80));
+                        Multimedia.getImage("heart_empty.png", 80));
             }
         }
+
+        if (newValue.intValue() < oldValue.intValue()) {
+            Multimedia.playSound("lifelose.wav");
+        }
+    }
+
+    /**
+     * Update UI when multiplier changes
+     */
+    private void onMultiplierChanged(ObservableValue<? extends Number> observableValue,
+            Number oldValue, Number newValue) {
+        logger.info(Colour.purple("Multiplier changed from " + oldValue + " to " + newValue));
+        String color = "white";
+        double scale = 1D;
+        boolean animate = false;
+        switch (newValue.intValue()) {
+            case 1 -> {
+            }
+            case 2 -> {
+                color = "yellow";
+                scale = 1.25D;
+            }
+            case 3 -> {
+                color = "orange";
+                scale = 1.6D;
+            }
+            case 4 -> {
+                color = "red";
+                scale = 1.75D;
+                animate = true;
+            }
+            default -> {
+                color = "red";
+                scale = 2D;
+                animate = true;
+            }
+        }
+
+        String styleString = "-fx-text-fill: " + color + ";";
+        multiplierBox.getChildren().forEach((item) -> item.setStyle(styleString));
+
+        animateMultiplier(scale);
+
+        if (animate) {
+            if (multiplierTransition != null) {
+                multiplierTransition.stop();
+            }
+            var rotateTransition = new RotateTransition(Duration.millis(1000), multiplierBox);
+            rotateTransition.setFromAngle(-15);
+            rotateTransition.setToAngle(15);
+            rotateTransition.setCycleCount(Animation.INDEFINITE);
+            rotateTransition.setAutoReverse(true);
+
+            var scaleTransition = new ScaleTransition(Duration.millis(1400), multiplierBox);
+            scaleTransition.setFromX(scale * 0.9);
+            scaleTransition.setFromY(scale * 0.8);
+            scaleTransition.setToX(scale * 1.1);
+            scaleTransition.setToY(scale * 1.2);
+            scaleTransition.setCycleCount(Animation.INDEFINITE);
+            scaleTransition.setAutoReverse(true);
+
+            multiplierTransition = new ParallelTransition(rotateTransition, scaleTransition);
+            multiplierTransition.playFrom(Duration.millis(500));
+
+        } else {
+            if (multiplierTransition != null) {
+                multiplierTransition.stop();
+                multiplierTransition = null;
+
+                RotateTransition returnTransition = new RotateTransition(Duration.millis(100),
+                        multiplierBox);
+                returnTransition.setFromAngle(multiplierBox.getRotate());
+                returnTransition.setToAngle(0);
+                returnTransition.play();
+            }
+        }
+    }
+
+    private void animateMultiplier(double scale) {
+        double offsetX = -25;
+        double offsetY = 0;
+        TranslateTransition translateTransition = new TranslateTransition(Duration.millis(100),
+                multiplierBox);
+        translateTransition.setFromX(multiplierBox.getTranslateX());
+        translateTransition.setFromY(multiplierBox.getTranslateY());
+        translateTransition.setToX((scale - 1) * offsetX);
+        translateTransition.setToY((scale - 1) * offsetY);
+
+        ScaleTransition scaleTransition = new ScaleTransition(Duration.millis(100), multiplierBox);
+        scaleTransition.setFromX(multiplierBox.getScaleX());
+        scaleTransition.setFromY(multiplierBox.getScaleY());
+        scaleTransition.setToX(scale);
+        scaleTransition.setToY(scale);
+
+        translateTransition.play();
+        scaleTransition.play();
     }
 
     /**
@@ -375,8 +537,7 @@ public class ChallengeScene extends BaseScene {
      */
     private void gameOver() {
         logger.info(Colour.red("Game Over"));
-        Multimedia.stop(Category.MUSIC);
-        //Multimedia.playSound("game_over.wav");
+        Multimedia.queueMusic("end.wav", 1);
         timer.scaleTransition.stop();
         //gameWindow.startMenu();
         startScores();
@@ -394,14 +555,10 @@ public class ChallengeScene extends BaseScene {
      */
     void onScoreChanged(Observable observable, Number oldValue, Number newValue) {
         Timeline anim = new Timeline();
-        anim.getKeyFrames().add(new KeyFrame(
-                Duration.ZERO,
-                new KeyValue(displayedScore, displayedScore.get())
-        ));
-        anim.getKeyFrames().add(new KeyFrame(
-                Duration.millis(300),
-                new KeyValue(displayedScore, newValue)
-        ));
+        anim.getKeyFrames().add(new KeyFrame(Duration.ZERO,
+                new KeyValue(displayedScore, displayedScore.get())));
+        anim.getKeyFrames()
+                .add(new KeyFrame(Duration.millis(300), new KeyValue(displayedScore, newValue)));
         anim.play();
     }
 
@@ -418,7 +575,7 @@ public class ChallengeScene extends BaseScene {
         /**
          * Create a new GameTimer
          *
-         * @param width the starting width of the timer
+         * @param width  the starting width of the timer
          * @param height the height of the timer
          */
         public GameTimer(double width, double height) {
