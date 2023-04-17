@@ -1,5 +1,6 @@
 package uk.ac.soton.comp1206.scene;
 
+import java.util.HashMap;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -11,8 +12,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import uk.ac.soton.comp1206.component.GameBoard;
 import uk.ac.soton.comp1206.component.Leaderboard;
+import uk.ac.soton.comp1206.component.OpponentBoard;
 import uk.ac.soton.comp1206.component.PieceBoard;
 import uk.ac.soton.comp1206.game.Game;
+import uk.ac.soton.comp1206.game.Grid;
 import uk.ac.soton.comp1206.game.MultiplayerGame;
 import uk.ac.soton.comp1206.ui.GameWindow;
 import uk.ac.soton.comp1206.utils.Multimedia;
@@ -20,9 +23,11 @@ import uk.ac.soton.comp1206.utils.Multimedia;
 public class MultiplayerScene extends ChallengeScene {
 
     private static final Logger logger = LogManager.getLogger(MultiplayerScene.class);
-
-    private Leaderboard leaderboard;
     private final String myUsername;
+    private static final int NUM_OPPONENT_BOARDS = 3;
+    private final HashMap<String, String> opponentBoardsMap = new HashMap<>();
+    private final OpponentBoard[] opponentBoards = new OpponentBoard[NUM_OPPONENT_BOARDS];
+    private Leaderboard leaderboard;
 
     /**
      * Create a new Single Player challenge scene
@@ -53,8 +58,7 @@ public class MultiplayerScene extends ChallengeScene {
 
         mainPane = setupMain("challenge-background");
 
-        board = new GameBoard(game.getGrid(),
-                gameWindow.getWidth() / 2.,
+        board = new GameBoard(game.getGrid(), gameWindow.getWidth() / 2.,
                 gameWindow.getWidth() / 2.);
         mainPane.setCenter(board);
 
@@ -172,7 +176,7 @@ public class MultiplayerScene extends ChallengeScene {
         mainPane.setBottom(timerContainer);
         HBox.setMargin(timer, new Insets(20, 0, 20, 0));
 
-
+        setupMultiplayerBoards();
     }
 
     /**
@@ -189,11 +193,50 @@ public class MultiplayerScene extends ChallengeScene {
         switch (command) {
             case "SCORES" -> leaderboard.setScores(message);
             case "SCORE" -> leaderboard.updateScore(message);
+            case "BOARD" -> {
+                var messageSplit = message.split(":", 2);
+                var username = messageSplit[0];
+                var board = messageSplit[1];
+                opponentBoardsMap.put(username, board);
+                updateOpponentBoards();
+            }
         }
     }
 
     @Override
     void startScores() {
         gameWindow.startScores(game.getScore(), leaderboard);
+    }
+
+    private void setupMultiplayerBoards() {
+
+        VBox bottomBar = new VBox();
+        HBox boardsContainer = new HBox();
+        boardsContainer.setSpacing(10);
+        bottomBar.getChildren().addAll(timer, boardsContainer);
+        mainPane.setBottom(bottomBar);
+
+        for (int i = 0; i < NUM_OPPONENT_BOARDS; i++) {
+            var boardContainer = new VBox();
+            var board = new OpponentBoard(new Grid(5, 5), gameWindow.getWidth() / 2.,
+                    gameWindow.getWidth() / 2.);
+            opponentBoards[i] = board;
+            var boardLabel = new Label("[unbound]");
+            boardLabel.textProperty().bind(board.usernameProperty());
+            boardLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: white;");
+            boardContainer.getChildren().addAll(boardLabel, board);
+            boardsContainer.getChildren().add(boardContainer);
+        }
+    }
+
+    private void updateOpponentBoards() {
+        String[] topPlayers = leaderboard.getTopPlayers(NUM_OPPONENT_BOARDS);
+        for (int i = 0; i < topPlayers.length; i++) {
+            var username = topPlayers[i];
+            var board = opponentBoardsMap.get(username);
+            if (board != null) {
+                opponentBoards[i].setContents(username, board);
+            }
+        }
     }
 }

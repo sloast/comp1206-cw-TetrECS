@@ -1,6 +1,7 @@
 package uk.ac.soton.comp1206.component;
 
 import java.util.HashMap;
+import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
 import javafx.animation.ScaleTransition;
@@ -16,6 +17,7 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
+import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 import javafx.util.Pair;
 import org.apache.logging.log4j.LogManager;
@@ -33,8 +35,6 @@ import uk.ac.soton.comp1206.utils.Vector2;
  * The GameBlock value should be bound to a corresponding block in the Grid model.
  */
 public class GameBlock extends Canvas {
-
-    private static final Logger logger = LogManager.getLogger(GameBlock.class);
 
     /**
      * The set of colours for different pieces
@@ -60,33 +60,27 @@ public class GameBlock extends Canvas {
             // For invalid placement
 
     };
-
+    protected static final HashMap<Pair<Integer, Boolean>, Image> imageCache = new HashMap<>();
+    private static final Logger logger = LogManager.getLogger(GameBlock.class);
+    private static final double BASE_WIDTH = 100;
+    private static final Image BASE_IMAGE = Multimedia.getImage("block.png", 160);
     private final GameBoard gameBoard;
-
     private final double width;
     private final double height;
-
     /**
      * The column this block exists as in the grid
      */
     private final int x;
-
     /**
      * The row this block exists as in the grid
      */
     private final int y;
-
     private final BooleanProperty hovered = new SimpleBooleanProperty(false);
-    private int corner_radius = 25;
-    private static final double BASE_WIDTH = 100;
-    private static final Image BASE_IMAGE = Multimedia.getImage("block.png", 160);
-
-    protected static final HashMap<Pair<Integer, Boolean>, Image> imageCache = new HashMap<>();
-
     /**
      * The value of this block (0 = empty, otherwise specifies the colour to render as)
      */
     private final IntegerProperty value = new SimpleIntegerProperty(0);
+    private int corner_radius = 25;
 
     /**
      * Create a new single Game Block
@@ -331,11 +325,22 @@ public class GameBlock extends Canvas {
      * @param parent the parent pane to draw the animation on
      * @param delay  the delay before the animation starts
      */
-    public void fadeOut(Pane parent, double delay) {
+    public void clearAnimation(Pane parent, double delay) {
+
+        double duration = 300;
+        double fadeDuration = 300;
+
+        int val = this.value.get();
+        if (val >= 100) {
+            val = 0;
+        } else if (val < 0) {
+            val = -1 - val;
+        }
+
         logger.info("Fading out block at " + x + ", " + y + " with value " + value.get());
 
         var child = new GameBlock(null, x, y, width, height);
-        child.value.set(value.get());
+        child.value.set(val);
         child.paint();
 
         var childPos = gameBoard.localToParent(getLayoutX(), getLayoutY());
@@ -344,8 +349,6 @@ public class GameBlock extends Canvas {
         child.setLayoutY(childPos.getY());
 
         child.setMouseTransparent(true);
-
-        double duration = 300;
 
         ScaleTransition scaleTransition = new ScaleTransition(Duration.millis(duration), child);
         scaleTransition.setFromX(1);
@@ -362,10 +365,36 @@ public class GameBlock extends Canvas {
 
         scaleTransition.setOnFinished(event -> parent.getChildren().remove(child));
 
-        scaleTransition.play();
-        rotateTransition.play();
+        Rectangle rect = new Rectangle(width, height);
+
+        rect.setLayoutX(childPos.getX());
+        rect.setLayoutY(childPos.getY());
+
+        rect.setMouseTransparent(true);
+
+        rect.setFill(COLOURS[val].interpolate(Color.WHITE, 0.4));
+
+        FadeTransition appear = new FadeTransition(Duration.millis(1), rect);
+        appear.setFromValue(0);
+        appear.setToValue(1);
+        appear.setDelay(Duration.millis(delay));
+
+        rect.setOpacity(0);
+
+        FadeTransition fadeOut = new FadeTransition(Duration.millis(fadeDuration), rect);
+        fadeOut.setFromValue(1);
+        fadeOut.setToValue(0);
+        fadeOut.setInterpolator(Interpolator.EASE_IN);
+
+        appear.setOnFinished(e -> fadeOut.play());
+        fadeOut.setOnFinished(e -> parent.getChildren().remove(rect));
 
         parent.getChildren().add(child);
+        parent.getChildren().add(rect);
+
+        scaleTransition.play();
+        rotateTransition.play();
+        appear.play();
     }
 
 }

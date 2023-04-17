@@ -11,10 +11,7 @@ import javafx.scene.control.Alert;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import uk.ac.soton.comp1206.event.CommunicationsListener;
-import uk.ac.soton.comp1206.event.ListenerExpiredException;
 import uk.ac.soton.comp1206.utils.Colour;
-import uk.ac.soton.comp1206.utils.Colour.TextColour;
-import uk.ac.soton.comp1206.utils.Colour.TextMode;
 
 /**
  * Uses web sockets to talk to a web socket server and relays communication to attached listeners
@@ -48,7 +45,7 @@ public class Communicator {
             //Connect to the server
             ws = socketFactory.createSocket(server);
             ws.connect();
-            logger.info(Colour.green("Connected to " + server));
+            logger.info(Colour.green(Colour.bold("Connected to " + server)));
 
             //When a message is received, call the receive method
             ws.addListener(new WebSocketAdapter() {
@@ -61,6 +58,7 @@ public class Communicator {
                 public void onPingFrame(WebSocket webSocket, WebSocketFrame webSocketFrame)
                         throws Exception {
                     logger.info("Ping? Pong!");
+                    //logger.info("latency: " + webSocketFrame.getPayloadText());
                 }
             });
 
@@ -109,7 +107,7 @@ public class Communicator {
      * @param message Message to send
      */
     public void send(String message) {
-        logger.info("Sending message: " +Colour.yellow(Colour.italic( message)));
+        logger.info("Sending message: " +Colour.yellow(Colour.italic(message)));
 
         try {
             ws.sendText(message);
@@ -147,9 +145,6 @@ public class Communicator {
         for (CommunicationsListener handler : handlers) {
             try {
                 handler.receiveCommunication(message);
-            } catch (ListenerExpiredException f) {
-                removeListener(handler);
-                assert false;
             } catch (Exception e) {
                 logger.error(Colour.error("Error in listener: " + e.getMessage()));
                 e.printStackTrace();

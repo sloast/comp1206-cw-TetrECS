@@ -40,21 +40,12 @@ public class MultiplayerGame extends Game {
         }
 
         switch (type) {
-            case "PIECE":
+            case "PIECE" -> {
                 var piece = GamePiece.createPiece(Integer.parseInt(message));
                 nextPieces.add(piece);
                 notifyAll();
-                break;
-
-            //case "START":
-
-            case "ERROR":
-                logger.error("Received error from server: " + Colour.error(message));
-                break;
-
-            default:
-                logger.warn("Received unknown message from server: " + Colour.warn(communication));
-                break;
+            }
+            case "ERROR" -> logger.error("Received error from server: " + Colour.error(message));
         }
     }
 

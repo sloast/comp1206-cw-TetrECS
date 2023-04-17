@@ -276,8 +276,8 @@ public class GameBoard extends GridPane {
         var delay = 0;
 
         for (var block : blocksArray) {
-            getBlock(block).fadeOut(rootPane, delay);
-            delay += 40;
+            getBlock(block).clearAnimation(rootPane, delay);
+            delay += 50;
         }
     }
 

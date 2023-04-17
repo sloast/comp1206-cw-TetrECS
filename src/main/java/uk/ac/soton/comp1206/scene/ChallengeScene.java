@@ -320,6 +320,7 @@ public class ChallengeScene extends BaseScene {
             case N -> game.nextPiece();
             case EQUALS -> game.score(1, 5);
             case L -> game.loseLife();
+            case DIGIT0 -> timer.stop();
         }
     }
 
@@ -430,7 +431,7 @@ public class ChallengeScene extends BaseScene {
          *
          * @param ms the duration of the animation, in milliseconds
          */
-        void reset(double ms) {
+        public void reset(double ms) {
             //timer = new Rectangle(0, 0, 700, 40);
             if (colorAnimation != null) {
                 colorAnimation.stop();
@@ -525,5 +526,8 @@ public class ChallengeScene extends BaseScene {
             scaleTransition.playFrom(time);
         }
 
+        public void stop() {
+            scaleTransition.stop();
+        }
     }
 }
