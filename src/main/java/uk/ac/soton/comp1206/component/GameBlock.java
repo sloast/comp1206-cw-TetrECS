@@ -114,25 +114,12 @@ public class GameBlock extends Canvas {
         hovered.addListener(this::update);
     }
 
-
-    /**
-     * When the value of this block is updated, repaint the canvas
-     *
-     * @param observable what was updated
-     * @param oldValue   the old value
-     * @param newValue   the new value
-     */
-    private void updateValue(ObservableValue<? extends Number> observable, Number oldValue,
-            Number newValue) {
-        paint();
-    }
-
     /**
      * Repaints the block when the {@code Observable} is updated
      *
-     * @param invalidated the updated property
+     * @param ignored the updated property
      */
-    private void update(Observable invalidated) {
+    private void update(Observable ignored) {
         paint();
     }
 
@@ -162,10 +149,6 @@ public class GameBlock extends Canvas {
         } else {
             // If the block is not empty, paint with the colour represented by the value
             paintColor(COLOURS[val]);
-        }
-
-        if (hovered.get()) {
-            // paintHover();
         }
 
         if (isPivot) {
@@ -277,8 +260,8 @@ public class GameBlock extends Canvas {
                 height / 2 - pivotHeight / 2,
                 pivotWidth,
                 pivotHeight,
-                corner_radius/3,
-                corner_radius/3
+                corner_radius / 3,
+                corner_radius / 3
         );
     }
 

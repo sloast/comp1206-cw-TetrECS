@@ -3,6 +3,7 @@ package uk.ac.soton.comp1206.scene;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -21,6 +22,8 @@ public class SettingsScene extends BaseScene {
 
     @Override
     public void build() {
+        logger.info("Building settings scene");
+
         var mainPane = setupMain("challenge-background");
 
         var titleContainer = new HBox();
@@ -92,9 +95,8 @@ public class SettingsScene extends BaseScene {
     public void onKeyPress(KeyEvent keyEvent) {
         var keyCode = keyEvent.getCode();
         //logger.info("Key pressed: " + keyCode);
-        switch (keyCode) {
-            case ESCAPE -> gameWindow.startMenu();
+        if (keyCode == KeyCode.ESCAPE) {
+            gameWindow.startMenu();
         }
     }
-
 }

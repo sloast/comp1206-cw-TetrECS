@@ -1,13 +1,11 @@
 package uk.ac.soton.comp1206.scene;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import javafx.animation.Animation;
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
-import javafx.animation.KeyFrame;
-import javafx.animation.RotateTransition;
-import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -17,13 +15,12 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.image.ImageView;
-import javafx.scene.image.WritableImage;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,13 +37,10 @@ public class MenuScene extends BaseScene {
     private static final Logger logger = LogManager.getLogger(MenuScene.class);
 
     private final BorderPane mainPane = new BorderPane();
-    private final ImageView titleImg = new ImageView(Multimedia.getImage("TetrECS_small.png"));
-    private final VBox titleBox = new VBox();
     private final VBox menuBox = new VBox();
     private List<Node> menuItems;
     private int menuSize;
     private int menuIndex = -1;
-    private Text title;
 
     /**
      * Create a new menu scene
@@ -190,8 +184,8 @@ public class MenuScene extends BaseScene {
     public void onKeyPress(KeyEvent keyEvent) {
         var keyCode = keyEvent.getCode();
         logger.info("Key pressed: " + keyCode);
-        switch (keyCode) {
-            case ESCAPE -> exit();
+        if (Objects.requireNonNull(keyCode) == KeyCode.ESCAPE) {
+            exit();
         }
 
         // For testing

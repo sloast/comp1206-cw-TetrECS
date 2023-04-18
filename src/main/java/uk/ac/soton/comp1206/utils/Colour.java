@@ -7,7 +7,7 @@ import javafx.scene.paint.Color;
  * Contains methods for colouring and styling strings, using ANSI codes.<br> If multiple styles are
  * wanted on a single string, calls to {@code colour()} can be nested.
  * <p>
- * <p/> Available colors:
+ * <p> Available colors:
  * <ul>
  *     <li>RED</li>
  *     <li>GREEN</li>
@@ -37,36 +37,6 @@ import javafx.scene.paint.Color;
 public class Colour {
 
     /**
-     * The available colours for text.
-     */
-    public enum TextColour {
-        RED, GREEN, YELLOW, ORANGE, PURPLE, CYAN, DEFAULT, RED_BG, GREEN_BG, YELLOW_BG, ORANGE_BG, PURPLE_BG, CYAN_BG,
-        ;
-        private static final String[] values = {"\033[31m", "\033[32m", "\033[33m", "\033[34m",
-                "\033[35m", "\033[36m", "\033[0m", "\033[41;30m", "\033[42;30m", "\033[43;30m",
-                "\033[44;30m", "\033[45;30m", "\033[46;30m",};
-
-        public String code() {
-            return values[this.ordinal()];
-        }
-    }
-
-
-    /**
-     * The available styles for text.
-     */
-    public enum TextMode {
-        RESET, BOLD, ITALIC, UNDERLINE, STRIKETHROUGH,
-        ;
-        private static final String[] values = {"\033[0m", "\033[1m", "\033[3m", "\033[4m",
-                "\033[9m",};
-
-        public String code() {
-            return values[this.ordinal()];
-        }
-    }
-
-    /**
      * Adds ANSI colour codes to render a string in the specified colour.
      *
      * @param message the string to colour
@@ -76,7 +46,6 @@ public class Colour {
     public static String colour(String message, TextColour colour) {
         return colour.code() + message + "\033[0m";
     }
-
 
     /**
      * Adds ANSI colour codes to render a string in the specified colour, and with the specified
@@ -116,7 +85,6 @@ public class Colour {
         return mode.code() + message + "\033[0m";
     }
 
-
     /**
      * a utility method to convert RGB values into a rgb hex string, prefixed with a #<br> e.g.
      * {@code rgbToHex(255, 0, 0)} returns {@code "#ff0000"}
@@ -129,7 +97,6 @@ public class Colour {
     public static String rgb(int r, int g, int b) {
         return String.format("#%02x%02x%02x", r, g, b);
     }
-
 
     /**
      * a utility method to convert HSV values into a rgb hex string, prefixed with a #<br>
@@ -147,7 +114,6 @@ public class Colour {
                 (int) (c.getBlue() * 255)
         );
     }
-
 
     /**
      * Testing the class
@@ -179,7 +145,6 @@ public class Colour {
         System.out.println(purple("purple"));
 
     }
-
 
     /**
      * Colours the message in red using ANSI colour codes.
@@ -243,6 +208,7 @@ public class Colour {
 
     /**
      * Renders the message in bold.
+     *
      * @param message the message to style
      * @return the styled message
      */
@@ -252,6 +218,7 @@ public class Colour {
 
     /**
      * Renders the message in italic.
+     *
      * @param message the message to style
      * @return the styled message
      */
@@ -261,6 +228,7 @@ public class Colour {
 
     /**
      * Renders the message with an underline.
+     *
      * @param message the message to style
      * @return the styled message
      */
@@ -278,5 +246,34 @@ public class Colour {
 
     public static String warn(String message) {
         return yellow(bold(message));
+    }
+
+    /**
+     * The available colours for text.
+     */
+    public enum TextColour {
+        RED, GREEN, YELLOW, ORANGE, PURPLE, CYAN, DEFAULT, RED_BG, GREEN_BG, YELLOW_BG, ORANGE_BG, PURPLE_BG, CYAN_BG,
+        ;
+        private static final String[] values = {"\033[31m", "\033[32m", "\033[33m", "\033[34m",
+                "\033[35m", "\033[36m", "\033[0m", "\033[41;30m", "\033[42;30m", "\033[43;30m",
+                "\033[44;30m", "\033[45;30m", "\033[46;30m",};
+
+        public String code() {
+            return values[this.ordinal()];
+        }
+    }
+
+    /**
+     * The available styles for text.
+     */
+    public enum TextMode {
+        RESET, BOLD, ITALIC, UNDERLINE, STRIKETHROUGH,
+        ;
+        private static final String[] values = {"\033[0m", "\033[1m", "\033[3m", "\033[4m",
+                "\033[9m",};
+
+        public String code() {
+            return values[this.ordinal()];
+        }
     }
 }

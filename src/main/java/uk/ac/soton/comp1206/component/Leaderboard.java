@@ -117,12 +117,21 @@ public class Leaderboard extends ScoresList {
         return strings;
     }
 
+    public String[] getTopPlayers(int limit) {
+        return scores.stream()
+                .sorted(ScoresList.scoreComparator)
+                .map(s -> s.username)
+                .filter(u -> !u.equals(myUsername))
+                .limit(limit)
+                .toArray(String[]::new);
+    }
+
     /**
      * Represents a single score, with information about the number of lives remaining
      */
     public static class ScoreWithLives extends Score {
 
-        public int lives = 3;
+        public int lives;
 
         /**
          * Create a new score
@@ -157,14 +166,5 @@ public class Leaderboard extends ScoresList {
                 default -> "dead-score";
             };
         }
-    }
-
-    public String[] getTopPlayers(int limit) {
-        return scores.stream()
-                .sorted(ScoresList.scoreComparator)
-                .map(s -> s.username)
-                .filter(u -> !u.equals(myUsername))
-                .limit(limit)
-                .toArray(String[]::new);
     }
 }

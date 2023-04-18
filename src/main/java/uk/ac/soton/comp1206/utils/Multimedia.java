@@ -1,5 +1,6 @@
 package uk.ac.soton.comp1206.utils;
 
+import java.util.Objects;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -18,13 +19,13 @@ import org.apache.logging.log4j.Logger;
  */
 public class Multimedia {
 
+    public static final DoubleProperty musicVolume = new SimpleDoubleProperty(0.7);
+    public static final DoubleProperty soundEffectVolume = new SimpleDoubleProperty(0.4);
+    public static final DoubleProperty masterVolume = new SimpleDoubleProperty(0.5);
     private static final Logger logger = LogManager.getLogger(Multimedia.class);
     private static final String MUSIC_PATH = "/music/";
     private static final String SOUND_PATH = "/sounds/";
     private static final String IMAGE_PATH = "/images/";
-    public static DoubleProperty musicVolume = new SimpleDoubleProperty(0.7);
-    public static DoubleProperty soundEffectVolume = new SimpleDoubleProperty(0.4);
-    public static DoubleProperty masterVolume = new SimpleDoubleProperty(0.5);
     private static MediaPlayer soundEffectPlayer;
     private static MediaPlayer musicPlayer;
     // The upcoming music player is created in advance to avoid gaps
@@ -34,15 +35,18 @@ public class Multimedia {
 
     public static boolean isPlayingMusic(String filename) {
         return musicPlayer != null && musicPlayer.getMedia().getSource()
-                .equals(Multimedia.class.getResource(MUSIC_PATH + filename).toExternalForm());
+                .equals(Objects.requireNonNull(Multimedia.class.getResource(MUSIC_PATH + filename))
+                        .toExternalForm());
     }
 
     private static Media loadMusic(String filename) throws NullPointerException {
-        return new Media(Multimedia.class.getResource(MUSIC_PATH + filename).toExternalForm());
+        return new Media(Objects.requireNonNull(Multimedia.class.getResource(MUSIC_PATH + filename))
+                .toExternalForm());
     }
 
     private static Media loadSound(String filename) throws NullPointerException {
-        return new Media(Multimedia.class.getResource(SOUND_PATH + filename).toExternalForm());
+        return new Media(Objects.requireNonNull(Multimedia.class.getResource(SOUND_PATH + filename))
+                .toExternalForm());
     }
 
     public static void startMusic(String filename) throws NullPointerException {
@@ -92,13 +96,9 @@ public class Multimedia {
             double duration = 1000;
 
             Timeline fadeOut = new Timeline(
-                    new KeyFrame(Duration.ZERO,
-                            new KeyValue(volume, volume.get())),
-                    new KeyFrame(Duration.millis(duration),
-                            new KeyValue(volume, 0)),
-                    new KeyFrame(Duration.millis(duration),
-                            event -> onFadeEnded.run())
-            );
+                    new KeyFrame(Duration.ZERO, new KeyValue(volume, volume.get())),
+                    new KeyFrame(Duration.millis(duration), new KeyValue(volume, 0)),
+                    new KeyFrame(Duration.millis(duration), event -> onFadeEnded.run()));
 
             fadeOut.play();
         } else {
@@ -119,20 +119,18 @@ public class Multimedia {
     }
 
 
-
     /**
      * Plays a sound effect after the specified delay
      *
-     * @param filename the name of the file to play
-     * @param delay the delay before playing the sound
+     * @param filename     the name of the file to play
+     * @param delay        the delay before playing the sound
      * @param highPriority if {@code true}, the sound cannot be interrupted by other sounds
      * @throws NullPointerException if the file is not found
      */
-    public static void playSoundDelayed(String filename, double delay, double volume, boolean highPriority)
-            throws NullPointerException {
-        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(delay), event -> {
-            playSound(filename, volume, highPriority);
-        }));
+    public static void playSoundDelayed(String filename, double delay, double volume,
+            boolean highPriority) throws NullPointerException {
+        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(delay),
+                event -> playSound(filename, volume, highPriority)));
         timeline.play();
     }
 
@@ -150,7 +148,7 @@ public class Multimedia {
      * Plays a sound effect
      *
      * @param filename the name of the file to play
-     * @param volume the volume of the sound
+     * @param volume   the volume of the sound
      * @throws NullPointerException if the file is not found
      */
     public static void playSound(String filename, double volume) throws NullPointerException {
@@ -160,10 +158,9 @@ public class Multimedia {
     /**
      * Plays a sound effect
      *
-     * @param filename the name of the file to play
-     * @param volume the volume of the sound
+     * @param filename     the name of the file to play
+     * @param volume       the volume of the sound
      * @param highPriority if {@code true}, the sound cannot be interrupted by other sounds
-     *
      * @throws NullPointerException if the file is not found
      */
     public static void playSound(String filename, double volume, boolean highPriority)
@@ -177,10 +174,7 @@ public class Multimedia {
         doNotInterrupt = highPriority;
         soundEffectPlayer = new MediaPlayer(loadSound(filename));
         soundEffectPlayer.volumeProperty()
-                .bind(masterVolume
-                        .multiply(soundEffectVolume)
-                        .multiply(volume)
-                );
+                .bind(masterVolume.multiply(soundEffectVolume).multiply(volume));
 
         soundEffectPlayer.setOnEndOfMedia(() -> doNotInterrupt = false);
 
@@ -213,12 +207,13 @@ public class Multimedia {
     }
 
     public static Image getImage(String filename, int size) throws NullPointerException {
-        return new Image(Multimedia.class.getResource(IMAGE_PATH + filename).toExternalForm(),
-                size, size, true, false);
+        return new Image(Objects.requireNonNull(Multimedia.class.getResource(IMAGE_PATH + filename))
+                .toExternalForm(), size, size, true, false);
     }
 
     public static Image getImage(String filename) throws NullPointerException {
-        return new Image(Multimedia.class.getResource(IMAGE_PATH + filename).toExternalForm());
+        return new Image(Objects.requireNonNull(Multimedia.class.getResource(IMAGE_PATH + filename))
+                .toExternalForm());
     }
 
     /**

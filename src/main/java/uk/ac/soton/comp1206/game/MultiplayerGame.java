@@ -10,10 +10,9 @@ import uk.ac.soton.comp1206.utils.Colour;
 public class MultiplayerGame extends Game {
 
     private static final Logger logger = LogManager.getLogger(MultiplayerGame.class);
+    private static final int TARGET_QUEUE_SIZE = 5;
     private final Communicator communicator;
-
-    private Queue<GamePiece> nextPieces = new ArrayDeque<>();
-    private final int TARGET_QUEUE_SIZE = 5;
+    private final Queue<GamePiece> nextPieces = new ArrayDeque<>();
 
     /**
      * Create a new game with the specified rows and columns. Creates a corresponding grid model.

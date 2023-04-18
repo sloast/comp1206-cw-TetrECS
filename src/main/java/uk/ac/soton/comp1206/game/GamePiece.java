@@ -14,12 +14,7 @@ public class GamePiece {
      * The total number of pieces in this game
      */
     public static final int PIECES = 15;
-
-    /**
-     * The 2D grid representation of the shape of this piece
-     */
-    private int[][] blocks;
-
+    private static final Random random = new Random();
     /**
      * The value of this piece
      */
@@ -29,8 +24,34 @@ public class GamePiece {
      * The name of this piece
      */
     private final String name;
+    /**
+     * The 2D grid representation of the shape of this piece
+     */
+    private int[][] blocks;
 
-    private static final Random random = new Random();
+    /**
+     * Create a new GamePiece with the given name, block makeup and value. Should not be called
+     * directly, only via the factory.
+     *
+     * @param name   name of the piece
+     * @param blocks block makeup of the piece
+     * @param value  the value of this piece
+     */
+    private GamePiece(String name, int[][] blocks, int value) {
+        this.name = name;
+        this.blocks = blocks;
+        this.value = value;
+
+        //Use the shape of the block to create a grid with either 0 (empty) or the value of this shape for each block.
+        for (int x = 0; x < blocks.length; x++) {
+            for (int y = 0; y < blocks[x].length; y++) {
+                if (blocks[x][y] == 0) {
+                    continue;
+                }
+                blocks[x][y] = value;
+            }
+        }
+    }
 
     /**
      * Create a new GamePiece of the specified piece number
@@ -203,30 +224,6 @@ public class GamePiece {
      */
     public static GamePiece createPiece() {
         return createPiece(random.nextInt(PIECES));
-    }
-
-    /**
-     * Create a new GamePiece with the given name, block makeup and value. Should not be called
-     * directly, only via the factory.
-     *
-     * @param name   name of the piece
-     * @param blocks block makeup of the piece
-     * @param value  the value of this piece
-     */
-    private GamePiece(String name, int[][] blocks, int value) {
-        this.name = name;
-        this.blocks = blocks;
-        this.value = value;
-
-        //Use the shape of the block to create a grid with either 0 (empty) or the value of this shape for each block.
-        for (int x = 0; x < blocks.length; x++) {
-            for (int y = 0; y < blocks[x].length; y++) {
-                if (blocks[x][y] == 0) {
-                    continue;
-                }
-                blocks[x][y] = value;
-            }
-        }
     }
 
     /**

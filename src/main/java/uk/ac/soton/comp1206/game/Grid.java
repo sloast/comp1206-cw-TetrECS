@@ -5,15 +5,16 @@ import javafx.beans.property.SimpleIntegerProperty;
 import uk.ac.soton.comp1206.utils.Vector2;
 
 /**
- * The Grid is a model which holds the state of a game board. It is made up of a set of Integer values arranged in a 2D
- * arrow, with rows and columns.
- *
- * Each value inside the Grid is an IntegerProperty can be bound to enable modification and display of the contents of
+ * The Grid is a model which holds the state of a game board. It is made up of a set of Integer
+ * values arranged in a 2D arrow, with rows and columns.
+ * <p>
+ * Each value inside the Grid is an IntegerProperty can be bound to enable modification and display
+ * of the contents of the grid.
+ * <p>
+ * The Grid contains functions related to modifying the model, for example, placing a piece inside
  * the grid.
- *
- * The Grid contains functions related to modifying the model, for example, placing a piece inside the grid.
- *
- * The Grid should be linked to a GameBoard for it's display.
+ * <p>
+ * The Grid should be linked to a GameBoard for its display.
  */
 public class Grid {
 
@@ -35,6 +36,7 @@ public class Grid {
 
     /**
      * Create a new Grid with the specified number of columns and rows and initialise them
+     *
      * @param cols number of columns
      * @param rows number of rows
      */
@@ -47,8 +49,8 @@ public class Grid {
         staticGrid = new int[cols][rows];
 
         //Add a SimpleIntegerProperty to every block in the grid
-        for(var y = 0; y < rows; y++) {
-            for(var x = 0; x < cols; x++) {
+        for (var y = 0; y < rows; y++) {
+            for (var x = 0; x < cols; x++) {
                 grid[x][y] = new SimpleIntegerProperty(0);
                 staticGrid[x][y] = 0;
             }
@@ -56,7 +58,9 @@ public class Grid {
     }
 
     /**
-     * Get the Integer property contained inside the grid at a given row and column index. Can be used for binding.
+     * Get the Integer property contained inside the grid at a given row and column index. Can be
+     * used for binding.
+     *
      * @param x column
      * @param y row
      * @return the IntegerProperty at the given x and y in this grid
@@ -67,8 +71,9 @@ public class Grid {
 
     /**
      * Update the value at the given x and y index within the grid
-     * @param x column
-     * @param y row
+     *
+     * @param x     column
+     * @param y     row
      * @param value the new value
      */
     public void set(int x, int y, int value) {
@@ -91,6 +96,7 @@ public class Grid {
 
     /**
      * Get the value represented at the given x and y index within the grid
+     *
      * @param x column
      * @param y row
      * @return the value
@@ -135,6 +141,7 @@ public class Grid {
 
     /**
      * Get the number of columns in this game
+     *
      * @return number of columns
      */
     public int getCols() {
@@ -143,6 +150,7 @@ public class Grid {
 
     /**
      * Get the number of rows in this game
+     *
      * @return number of rows
      */
     public int getRows() {
@@ -150,7 +158,8 @@ public class Grid {
     }
 
     public boolean canPlayPiece(GamePiece piece, int x, int y) {
-        x--;y--; // offset to start from center of piece
+        x--;
+        y--; // offset to start from center of piece
         for (var cx = 0; cx < piece.getBlocks().length; cx++) {
             for (var cy = 0; cy < piece.getBlocks()[0].length; cy++) {
                 if (piece.getBlocks()[cx][cy] != 0 && get(x + cx, y + cy) != 0) {
@@ -162,7 +171,8 @@ public class Grid {
     }
 
     public void playPiece(GamePiece piece, int x, int y) {
-        x--;y--; // offset to start from center of piece
+        x--;
+        y--; // offset to start from center of piece
         for (var cx = 0; cx < piece.getBlocks().length; cx++) {
             for (var cy = 0; cy < piece.getBlocks()[0].length; cy++) {
                 if (piece.getBlocks()[cx][cy] != 0) {
@@ -173,7 +183,8 @@ public class Grid {
     }
 
     public void previewPiece(GamePiece piece, int x, int y, boolean valid) {
-        x--;y--; // offset to start from center of piece
+        x--;
+        y--; // offset to start from center of piece
         int value = valid ? piece.getValue() : -1;
         for (var cx = 0; cx < piece.getBlocks().length; cx++) {
             for (var cy = 0; cy < piece.getBlocks()[0].length; cy++) {
@@ -185,7 +196,8 @@ public class Grid {
     }
 
     public void removeTempPiece(GamePiece piece, int x, int y) {
-        x--;y--; // offset to start from center of piece
+        x--;
+        y--; // offset to start from center of piece
         for (var cx = 0; cx < piece.getBlocks().length; cx++) {
             for (var cy = 0; cy < piece.getBlocks()[0].length; cy++) {
                 if (piece.getBlocks()[cx][cy] != 0 && inBounds(x + cx, y + cy)) {

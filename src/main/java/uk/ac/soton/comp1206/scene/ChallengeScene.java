@@ -63,7 +63,6 @@ public class ChallengeScene extends BaseScene {
     final IntegerProperty highScore = new SimpleIntegerProperty(0);
     public PieceBoard currentPieceBoard;
     public PieceBoard nextPieceBoard;
-    public ScheduledExecutorService gameTimer;
     public BorderPane mainPane;
     Game game;
     GameBoard board;
@@ -171,7 +170,7 @@ public class ChallengeScene extends BaseScene {
         // draws a heart icon for each life
         livesContainer = new VBox();
         {
-            for (int i = 0; i < game.MAX_LIVES; i++) {
+            for (int i = 0; i < Game.MAX_LIVES; i++) {
                 livesContainer.getChildren()
                         .add(new ImageView(Multimedia.getImage("heart.png", 80)));
             }
@@ -396,7 +395,7 @@ public class ChallengeScene extends BaseScene {
     private void onLivesChanged(ObservableValue<? extends Number> observableValue, Number oldValue,
             Number newValue) {
         logger.info(Colour.purple("Lives changed from " + oldValue + " to " + newValue));
-        int max = game.MAX_LIVES;
+        int max = Game.MAX_LIVES;
         for (int i = 0; i < max; i++) {
             if (i < newValue.intValue()) {
                 ((ImageView) livesContainer.getChildren().get(max - i - 1)).setImage(

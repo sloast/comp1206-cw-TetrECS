@@ -34,16 +34,12 @@ public class GameWindow {
 
     private static final boolean SHOW_SPLASH_SCREEN = false;
     private static final boolean SHOW_EXIT_SPLASH = true;
-
+    final Communicator communicator;
     private final int width;
     private final int height;
-
     private final Stage stage;
-
     private BaseScene currentScene;
     private Scene scene;
-
-    final Communicator communicator;
 
     /**
      * Create a new GameWindow attached to the given stage with the specified width and height
@@ -106,8 +102,6 @@ public class GameWindow {
     }
 
     /**
-     *
-     *
      * @param username the player's nickname in the current channel
      */
     public void startMultiplayerGame(String username) {

@@ -40,7 +40,7 @@ import uk.ac.soton.comp1206.utils.Colour;
 
 public class LobbyScene extends BaseScene {
 
-    private static Logger logger = LogManager.getLogger(LobbyScene.class);
+    private static final Logger logger = LogManager.getLogger(LobbyScene.class);
 
     private static final boolean ALLOW_JOIN_BLANK = true;
 
@@ -172,8 +172,8 @@ public class LobbyScene extends BaseScene {
 
     private void onKeyPressed(KeyEvent keyEvent) {
         var keyCode = keyEvent.getCode();
-        switch (keyCode) {
-            case ESCAPE -> exit();
+        if (keyCode == KeyCode.ESCAPE) {
+            exit();
         }
     }
 
@@ -250,6 +250,7 @@ public class LobbyScene extends BaseScene {
             case "START" -> {
                 logger.info("The game has started in #" + currentChannel);
                 chatWindow.addSystemMessage("Game is now starting...");
+                executor.shutdown();
                 Platform.runLater(() -> gameWindow.startMultiplayerGame(chatWindow.username.get()));
             }
 
@@ -263,16 +264,15 @@ public class LobbyScene extends BaseScene {
 
     public class ChatWindow extends BorderPane {
 
+        public final StringProperty username = new SimpleStringProperty(
+                (System.getProperty("user.name")));
         private final GridPane messageGrid;
         private final List<Message> messages = new ArrayList<>();
-
         private final ScrollPane chatBox;
         private final TextFlow userList;
         private final TextField textField;
         private final Button startButton;
         private final Button leaveButton;
-        public StringProperty username = new SimpleStringProperty(
-                (System.getProperty("user.name")));
         private String[] currentUsers = new String[0];
 
         public ChatWindow() {
@@ -412,7 +412,7 @@ public class LobbyScene extends BaseScene {
             for (var user : currentUsers) {
                 var label = new Label(user);
                 String style = user.equals(username.get()) ?
-                        Message.getMyStyle() : Message.getUserStyle(user);
+                        Message.MY_USER_STYLE : Message.getUserStyle(user);
                 label.setStyle(style);
                 //logger.info("User style: " + style);
                 labels.add(label);
@@ -542,7 +542,9 @@ public class LobbyScene extends BaseScene {
                         addSystemMessage("Nicknames",
                                 "Usage: /nick <name>, sets your nick");
                     } else {
-                        if (argument.equals("/random")) argument = UUID.randomUUID().toString();
+                        if (argument.equals("/random")) {
+                            argument = UUID.randomUUID().toString();
+                        }
                         communicator.send("NICK " + argument);
                     }
                 }
@@ -561,8 +563,9 @@ public class LobbyScene extends BaseScene {
                                 return;
                             }
                             logger.info(channelList.getChildren().size());
-                            argument = ((Label)channelList.getChildren().get(
-                                new Random().nextInt(channelList.getChildren().size()))).getText();
+                            argument = ((Label) channelList.getChildren().get(
+                                    new Random().nextInt(
+                                            channelList.getChildren().size()))).getText();
                         }
                         communicator.send("JOIN " + argument);
                     }
@@ -577,7 +580,9 @@ public class LobbyScene extends BaseScene {
                         if (currentChannel != null) {
                             communicator.send("PART");
                         }
-                        if (argument.equals("/random")) argument = UUID.randomUUID().toString();
+                        if (argument.equals("/random")) {
+                            argument = UUID.randomUUID().toString();
+                        }
                         communicator.send("CREATE " + argument);
                     }
                 }
@@ -630,12 +635,12 @@ public class LobbyScene extends BaseScene {
 
         public class Message {
 
+            public static final String MY_USER_STYLE = "-fx-text-fill: #3FFF73; -fx-underline: true;";
             private static final DateTimeFormatter formatter =
                     DateTimeFormatter.ofPattern("HH:mm");
-
-            public String timeStamp;
-            public String sender;
-            public String content;
+            public final String timeStamp;
+            public final String sender;
+            public final String content;
             public MessageType type = MessageType.GENERAL;
 
             public Message(String text) {
@@ -656,10 +661,6 @@ public class LobbyScene extends BaseScene {
             public static String getUserStyle(String username) {
                 return "-fx-text-fill: " + Colour.hsv((username + " ").hashCode() % 360, 0.8, 1)
                         + ";";
-            }
-
-            public static String getMyStyle() {
-                return "-fx-text-fill: #3FFF73; -fx-underline: true;";
             }
 
             public String getUserColour() {

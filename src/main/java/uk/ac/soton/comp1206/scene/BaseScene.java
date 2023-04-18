@@ -1,5 +1,6 @@
 package uk.ac.soton.comp1206.scene;
 
+import java.util.Objects;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
@@ -19,6 +20,7 @@ public abstract class BaseScene {
 
     /**
      * Create a new scene, passing in the GameWindow the scene will be displayed in
+     *
      * @param gameWindow the game window
      */
     public BaseScene(GameWindow gameWindow) {
@@ -37,12 +39,14 @@ public abstract class BaseScene {
 
     /**
      * Create a new JavaFX scene using the root contained within this scene
+     *
      * @return JavaFX scene
      */
     public Scene setScene() {
         var previous = gameWindow.getScene();
         Scene scene = new Scene(root, previous.getWidth(), previous.getHeight(), Color.BLACK);
-        scene.getStylesheets().add(getClass().getResource("/style/game.css").toExternalForm());
+        scene.getStylesheets().add(
+                Objects.requireNonNull(getClass().getResource("/style/game.css")).toExternalForm());
         this.scene = scene;
         return scene;
     }
@@ -53,7 +57,7 @@ public abstract class BaseScene {
         var stackPane = new StackPane();
         stackPane.setMaxWidth(gameWindow.getWidth());
         stackPane.setMaxHeight(gameWindow.getHeight());
-        stackPane.getStyleClass().add("challenge-background");
+        stackPane.getStyleClass().add(styleClass);
         root.getChildren().add(stackPane);
 
         var mainPane = new BorderPane();
@@ -64,6 +68,7 @@ public abstract class BaseScene {
 
     /**
      * Get the JavaFX scene contained inside
+     *
      * @return JavaFX scene
      */
     public Scene getScene() {

@@ -43,6 +43,22 @@ public class Game {
     public static final int MAX_LIVES = 3;
     private static final Logger logger = LogManager.getLogger(Game.class);
     /**
+     * The number of lives the player has left
+     */
+    public final IntegerProperty lives = new SimpleIntegerProperty(3);
+    /**
+     * The current level (player gains 1 level per 1000 points)
+     */
+    public final IntegerProperty level = new SimpleIntegerProperty(0);
+    /**
+     * The current multiplier
+     */
+    public final IntegerProperty multiplier = new SimpleIntegerProperty(1);
+    /**
+     * The current score
+     */
+    public final IntegerProperty score = new SimpleIntegerProperty(0);
+    /**
      * Number of rows
      */
     final int rows;
@@ -50,6 +66,8 @@ public class Game {
      * Number of columns
      */
     final int cols;
+
+    // Properties that the UI can bind to
     /**
      * The grid model linked to the game
      */
@@ -60,27 +78,6 @@ public class Game {
      * The block that is currently selected
      */
     public GameBlock hoveredBlock = null;
-
-    // Properties that the UI can bind to
-    /**
-     * The number of lives the player has left
-     */
-    public IntegerProperty lives = new SimpleIntegerProperty(3);
-
-    /**
-     * The current level (player gains 1 level per 1000 points)
-     */
-    public IntegerProperty level = new SimpleIntegerProperty(0);
-
-    /**
-     * The current multiplier
-     */
-    public IntegerProperty multiplier = new SimpleIntegerProperty(1);
-
-    /**
-     * The current score
-     */
-    public IntegerProperty score = new SimpleIntegerProperty(0);
     // Pieces
     GamePiece currentPiece = null;
     GamePiece nextPiece = null;

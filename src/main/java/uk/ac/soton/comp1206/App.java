@@ -2,6 +2,7 @@ package uk.ac.soton.comp1206;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 import javafx.application.Application;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -19,21 +20,18 @@ import uk.ac.soton.comp1206.utils.Colour;
  */
 public class App extends Application {
 
+    public static final boolean DEBUG_MODE = true;
+    private static final Logger logger = LogManager.getLogger(App.class);
+    private static App instance;
     /**
      * Base resolution width
      */
     private final int width = 800;
-
     /**
      * Base resolution height
      */
     private final int height = 600;
-
-    private static App instance;
-    private static final Logger logger = LogManager.getLogger(App.class);
     private Stage stage;
-
-    public static final boolean DEBUG_MODE = true;
 
     /**
      * Start the game
@@ -43,6 +41,15 @@ public class App extends Application {
     public static void main(String[] args) {
         logger.info("Starting client");
         launch();
+    }
+
+    /**
+     * Get the singleton App instance
+     *
+     * @return the app
+     */
+    public static App getInstance() {
+        return instance;
     }
 
     /**
@@ -68,7 +75,8 @@ public class App extends Application {
     private void eula() {
         try {
             String content = Files.readString(Path.of(
-                    App.class.getResource("/misc/eula.txt").getPath().substring(1)));
+                    Objects.requireNonNull(App.class.getResource("/misc/eula.txt")).getPath()
+                            .substring(1)));
             var alert = new Alert(AlertType.WARNING);
             alert.getButtonTypes().clear();
             alert.getButtonTypes().add(new ButtonType("I agree", ButtonData.OK_DONE));
@@ -110,15 +118,6 @@ public class App extends Application {
     public void shutdown() {
         logger.info(Colour.cyan("Shutting down"));
         System.exit(0);
-    }
-
-    /**
-     * Get the singleton App instance
-     *
-     * @return the app
-     */
-    public static App getInstance() {
-        return instance;
     }
 
 }

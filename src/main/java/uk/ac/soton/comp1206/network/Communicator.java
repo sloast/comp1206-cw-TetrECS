@@ -21,16 +21,13 @@ import uk.ac.soton.comp1206.utils.Colour;
 public class Communicator {
 
     private static final Logger logger = LogManager.getLogger(Communicator.class);
-
+    private static final boolean REQUIRE_CONNECTION = false;
     /**
      * Attached communication listeners listening to messages on this Communicator. Each will be
      * sent any messages.
      */
     private final List<CommunicationsListener> handlers = new ArrayList<>();
-
     private WebSocket ws = null;
-
-    private static final boolean REQUIRE_CONNECTION = false;
 
     /**
      * Create a new communicator to the given web socket server
@@ -106,7 +103,7 @@ public class Communicator {
      * @param message Message to send
      */
     public void send(String message) {
-        logger.info("Sending message: " +Colour.yellow(Colour.italic(message)));
+        logger.info("Sending message: " + Colour.yellow(Colour.italic(message)));
 
         try {
             ws.sendText(message);

@@ -28,7 +28,6 @@ public class ScoresScene extends BaseScene {
     private static final Logger logger = LogManager.getLogger(ScoresScene.class);
 
     private static final Path scoresPath = Path.of("scores.txt");
-    ;
 
     private boolean checkLastScore = false;
     private int newScore = -1;
@@ -67,7 +66,6 @@ public class ScoresScene extends BaseScene {
      */
     public ScoresScene(GameWindow gameWindow) {
         super(gameWindow);
-        checkLastScore = false;
     }
 
 
@@ -171,7 +169,7 @@ public class ScoresScene extends BaseScene {
             Score lowest = localScores.min();
 
             if (newScore > lowest.score) {
-                localScores.scores.remove(lowest);
+                //localScores.scores.remove(lowest);
                 localScores.scores.add(newScoreObj);
                 title.setText("NEW HIGH SCORE!");
             }
@@ -242,7 +240,7 @@ public class ScoresScene extends BaseScene {
         onlineScores.setAll(lines);
 
         if (newScoreObj != null && newScore > onlineScores.min().score) {
-            onlineScores.scores.remove(onlineScores.min());
+            //onlineScores.scores.remove(onlineScores.min());
             onlineScores.scores.add(newScoreObj);
         }
 
@@ -321,10 +319,6 @@ public class ScoresScene extends BaseScene {
                     "Player 9: 900",
                     "Player 10: 1000"
             ));
-        }
-
-        public HiScoresList(String scoresText) {
-            super(scoresText);
         }
 
         public HiScoresList(List<String> scores) {

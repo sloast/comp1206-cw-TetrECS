@@ -28,138 +28,11 @@ import org.apache.logging.log4j.Logger;
  */
 public class ScoresList extends GridPane {
 
-    private static final Logger logger = LogManager.getLogger(ScoresList.class);
-
-    /**
-     * Represents a single score
-     */
-    public static class Score {
-
-        /**
-         * Create a new score
-         *
-         * @param username the username
-         * @param score    the score
-         * @param type     the type of score
-         */
-        public Score(String username, int score, Score.ScoreType type) {
-            this.username = username.replaceAll(":", "");
-            this.score = score;
-            this.type = type;
-            if (type == Score.ScoreType.NEWSCORE) {
-                this.usernameProperty = new SimpleStringProperty("");
-            }
-        }
-
-        /**
-         * Create a new score
-         *
-         * @param username the username
-         * @param score    the score
-         */
-        public Score(String username, int score) {
-            this.username = username;
-            this.score = score;
-        }
-
-        /**
-         * Create a new score from a string <br> String should be in the format
-         * {@code "username:score"}
-         *
-         * @param text the text to parse
-         */
-        public Score(String text) {
-            var split = text.split(" *: *");
-            this.username = split[0];
-            this.score = Integer.parseInt(split[1]);
-            if (this.username.startsWith("%MYSCORE%")) {
-                this.username = this.username.substring(9);
-                this.type = ScoreType.MYSCORE;
-            }
-        }
-
-        public String username;
-        public int score;
-        public Node[] nodes = new Node[3];
-
-        public enum ScoreType {
-            NORMAL, MYSCORE, NEWSCORE, DIED
-        }
-
-        public ScoreType type = ScoreType.NORMAL;
-        public StringProperty usernameProperty;
-
-        /**
-         * Animate the score appearing
-         *
-         * @param delay the delay before the animation starts
-         */
-        public void animate(Duration delay) {
-            for (var node : nodes) {
-                if (node == null) {
-                    return;
-                }
-
-                var duration = Duration.millis(500);
-
-                node.setOpacity(0);
-                //node.setTranslateX(-300);
-
-                var translate = new TranslateTransition(duration, node);
-                translate.setFromY(30);
-                translate.setToY(0);
-
-                var fade = new FadeTransition(duration, node);
-                fade.setFromValue(0);
-                fade.setToValue(1);
-
-                translate.setDelay(delay);
-                fade.setDelay(delay);
-
-                translate.play();
-                fade.play();
-            }
-        }
-
-        /**
-         * Get the style class for this score depending on its type
-         *
-         * @return the style class
-         */
-        public String getStyleClass() {
-            return switch (type) {
-                case MYSCORE -> "my-score";
-                default -> "";
-            };
-        }
-
-        /**
-         * Get a string representation of this score
-         *
-         * @return a string of the format {@code "username:score"}
-         */
-        @Override
-        public String toString() {
-            return username + ":" + score;
-        }
-    }
-
-    public ListProperty<Score> scores;
-
     public static final Comparator<Score> scoreComparator = (a, b) -> b.score - a.score;
-
-    protected boolean frozen = true;
     protected static final int MAX_LIST_LENGTH = 10;
-
-    /**
-     * Loads scores from a list
-     *
-     * @param scores the scores to load, in text format
-     */
-    public void setAll(List<String> scores) {
-        this.scores.setAll(scores.stream().map(Score::new).toList());
-    }
-
+    private static final Logger logger = LogManager.getLogger(ScoresList.class);
+    public final ListProperty<Score> scores;
+    protected boolean frozen = true;
     /**
      * Create a new {@code ScoresList} with placeholder scores
      */
@@ -215,6 +88,15 @@ public class ScoresList extends GridPane {
         getStyleClass().add("scores-list");
 
         //rebuild();
+    }
+
+    /**
+     * Loads scores from a list
+     *
+     * @param scores the scores to load, in text format
+     */
+    public void setAll(List<String> scores) {
+        this.scores.setAll(scores.stream().map(Score::new).toList());
     }
 
     /**
@@ -301,6 +183,115 @@ public class ScoresList extends GridPane {
                 .limit(MAX_LIST_LENGTH)
                 .max(scoreComparator)
                 .orElseThrow();
+    }
+
+    /**
+     * Represents a single score
+     */
+    public static class Score {
+
+        public String username;
+        public int score;
+        public Node[] nodes = new Node[3];
+        public ScoreType type = ScoreType.NORMAL;
+        public StringProperty usernameProperty;
+        /**
+         * Create a new score
+         *
+         * @param username the username
+         * @param score    the score
+         * @param type     the type of score
+         */
+        public Score(String username, int score, Score.ScoreType type) {
+            this.username = username.replaceAll(":", "");
+            this.score = score;
+            this.type = type;
+            if (type == Score.ScoreType.NEWSCORE) {
+                this.usernameProperty = new SimpleStringProperty("");
+            }
+        }
+
+        /**
+         * Create a new score
+         *
+         * @param username the username
+         * @param score    the score
+         */
+        public Score(String username, int score) {
+            this.username = username;
+            this.score = score;
+        }
+
+        /**
+         * Create a new score from a string <br> String should be in the format
+         * {@code "username:score"}
+         *
+         * @param text the text to parse
+         */
+        public Score(String text) {
+            var split = text.split(" *: *");
+            this.username = split[0];
+            this.score = Integer.parseInt(split[1]);
+            if (this.username.startsWith("%MYSCORE%")) {
+                this.username = this.username.substring(9);
+                this.type = ScoreType.MYSCORE;
+            }
+        }
+
+        /**
+         * Animate the score appearing
+         *
+         * @param delay the delay before the animation starts
+         */
+        public void animate(Duration delay) {
+            for (var node : nodes) {
+                if (node == null) {
+                    return;
+                }
+
+                var duration = Duration.millis(500);
+
+                node.setOpacity(0);
+                //node.setTranslateX(-300);
+
+                var translate = new TranslateTransition(duration, node);
+                translate.setFromY(30);
+                translate.setToY(0);
+
+                var fade = new FadeTransition(duration, node);
+                fade.setFromValue(0);
+                fade.setToValue(1);
+
+                translate.setDelay(delay);
+                fade.setDelay(delay);
+
+                translate.play();
+                fade.play();
+            }
+        }
+
+        /**
+         * Get the style class for this score depending on its type
+         *
+         * @return the style class
+         */
+        public String getStyleClass() {
+            return type == ScoreType.MYSCORE ? "my-score" : "";
+        }
+
+        /**
+         * Get a string representation of this score
+         *
+         * @return a string of the format {@code "username:score"}
+         */
+        @Override
+        public String toString() {
+            return username + ":" + score;
+        }
+
+        public enum ScoreType {
+            NORMAL, MYSCORE, NEWSCORE, DIED
+        }
     }
 
 }

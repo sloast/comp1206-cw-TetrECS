@@ -1,6 +1,5 @@
 package uk.ac.soton.comp1206.scene;
 
-import javafx.animation.Animation;
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.ScaleTransition;
@@ -41,7 +40,7 @@ public class SplashScene extends BaseScene {
 
     @Override
     public void build() {
-        root = new GamePane(gameWindow.getWidth(),gameWindow.getHeight());
+        root = new GamePane(gameWindow.getWidth(), gameWindow.getHeight());
 
         var pane = new StackPane();
         pane.setMaxWidth(gameWindow.getWidth());
@@ -64,12 +63,10 @@ public class SplashScene extends BaseScene {
 
         scaleAnim.setInterpolator(Interpolator.LINEAR);
 
-
         var fadeAnim = new FadeTransition(Duration.seconds(1), splash);
         fadeAnim.setFromValue(0);
         fadeAnim.setToValue(1);
         fadeAnim.setDelay(Duration.seconds(.5));
-
 
         var fadeOutAnim = new FadeTransition(Duration.seconds(1), splash);
         fadeOutAnim.setFromValue(1);
@@ -93,7 +90,6 @@ public class SplashScene extends BaseScene {
         } else {
             fadeOutAnim.setOnFinished((e) -> gameWindow.startMenu());
         }
-
 
         if (!isExiting) {
             scaleAnim.play();

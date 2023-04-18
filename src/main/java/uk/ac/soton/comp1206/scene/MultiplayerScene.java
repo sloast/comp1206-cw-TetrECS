@@ -23,9 +23,9 @@ import uk.ac.soton.comp1206.utils.Multimedia;
 
 public class MultiplayerScene extends ChallengeScene {
 
+    static final boolean opponentBoardsEnabled = true;
     private static final Logger logger = LogManager.getLogger(MultiplayerScene.class);
     private static final int NUM_OPPONENT_BOARDS = 5;
-    static boolean opponentBoardsEnabled = true;
     private final String myUsername;
     private final HashMap<String, String> opponentBoardsMap = new HashMap<>();
     private final OpponentBoard[] opponentBoards = new OpponentBoard[NUM_OPPONENT_BOARDS];
@@ -162,7 +162,7 @@ public class MultiplayerScene extends ChallengeScene {
         // draws a heart icon for each life
         livesContainer = new VBox();
         {
-            for (int i = 0; i < game.MAX_LIVES; i++) {
+            for (int i = 0; i < Game.MAX_LIVES; i++) {
                 livesContainer.getChildren()
                         .add(new ImageView(Multimedia.getImage("heart.png", 80)));
             }
@@ -185,6 +185,9 @@ public class MultiplayerScene extends ChallengeScene {
         if (opponentBoardsEnabled) {
             setupMultiplayerBoards();
         }
+
+        // Create chatbox
+
     }
 
     /**

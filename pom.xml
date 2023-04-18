@@ -137,8 +137,6 @@
                     <mainClass>uk.ac.soton.comp1206/uk.ac.soton.comp1206.App</mainClass>
                 </configuration>
             </plugin>
-
-
         </plugins>
     </build>
 </project>

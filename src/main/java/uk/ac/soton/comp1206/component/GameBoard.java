@@ -27,32 +27,26 @@ import uk.ac.soton.comp1206.utils.Vector2;
 public class GameBoard extends GridPane {
 
     private static final Logger logger = LogManager.getLogger(GameBoard.class);
-
-    /**
-     * Number of columns in the board
-     */
-    private final int cols;
-
-    /**
-     * Number of rows in the board
-     */
-    private final int rows;
-
-    /**
-     * The visual width of the board - has to be specified due to being a Canvas
-     */
-    private final double width;
-
-    /**
-     * The visual height of the board - has to be specified due to being a Canvas
-     */
-    private final double height;
-
     /**
      * The grid this GameBoard represents
      */
     final Grid grid;
-
+    /**
+     * Number of columns in the board
+     */
+    private final int cols;
+    /**
+     * Number of rows in the board
+     */
+    private final int rows;
+    /**
+     * The visual width of the board - has to be specified due to being a Canvas
+     */
+    private final double width;
+    /**
+     * The visual height of the board - has to be specified due to being a Canvas
+     */
+    private final double height;
     /**
      * The blocks inside the grid
      */
@@ -220,7 +214,6 @@ public class GameBoard extends GridPane {
     }
 
 
-
     /**
      * Triggered when a block is clicked. Call the attached listener.
      *
@@ -234,7 +227,8 @@ public class GameBoard extends GridPane {
 
             blockLeftClickedListener.blockClicked(block);
             event.consume();
-        } else if (blockRightClickedListener != null && event.getButton() == MouseButton.SECONDARY) {
+        } else if (blockRightClickedListener != null
+                && event.getButton() == MouseButton.SECONDARY) {
             //logger.info("Block right clicked: {}, {}", block.getX(), block.getX());
 
             blockRightClickedListener.blockClicked(block);
@@ -286,7 +280,7 @@ public class GameBoard extends GridPane {
     public void lineCleared(Set<Vector2> blocks, Pane rootPane) {
         Vector2[] blocksArray = blocks.toArray(Vector2[]::new);
         Arrays.sort(blocksArray, Vector2::compareTo);
-        var delay = 0;
+        var delay = 100;
 
         for (var block : blocksArray) {
             getBlock(block).clearAnimation(rootPane, delay);

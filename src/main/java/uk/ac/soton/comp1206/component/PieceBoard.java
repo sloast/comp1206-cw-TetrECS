@@ -10,13 +10,28 @@ import uk.ac.soton.comp1206.game.Grid;
 public class PieceBoard extends GameBoard {
 
 
-    public PieceBoard(Grid grid, double width, double height) {
-        super(grid, width, height);
-        getBlock(1, 1).setPivot();
+    /**
+     * Create a new 3x3 piece board
+     *
+     * @param width  the visual width
+     * @param height the visual height
+     */
+    public PieceBoard(double width, double height) {
+        this(width, height, false);
     }
 
-    public PieceBoard(double width, double height) {
-        this(new Grid(3, 3), width, height);
+    /**
+     * Create a new 3x3 piece board
+     *
+     * @param width     the visual width
+     * @param height    the visual height
+     * @param showPivot whether to show a dot in the middle
+     */
+    public PieceBoard(double width, double height, boolean showPivot) {
+        super(new Grid(3, 3), width, height);
+        if (!showPivot) {
+            getBlock(1, 1).setPivot();
+        }
     }
 
     public void setPiece(GamePiece piece) {
