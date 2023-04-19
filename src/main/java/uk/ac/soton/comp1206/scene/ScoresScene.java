@@ -23,6 +23,10 @@ import uk.ac.soton.comp1206.network.Communicator;
 import uk.ac.soton.comp1206.ui.GameWindow;
 import uk.ac.soton.comp1206.utils.Colour;
 
+/**
+ * The scene for the high scores. The user can view the local and online high scores, and add theirs
+ * if they get a new high score.
+ */
 public class ScoresScene extends BaseScene {
 
     private static final Logger logger = LogManager.getLogger(ScoresScene.class);
@@ -39,6 +43,13 @@ public class ScoresScene extends BaseScene {
     private boolean fromMultiplayer = false;
     private ScoresList multiplayerScores;
 
+    /**
+     * Create a new {@link ScoresScene} when coming from a multiplayer game
+     *
+     * @param gameWindow  the game window
+     * @param score       the score achieved in the last game
+     * @param leaderboard the leaderboard of the multiplayer game
+     */
     public ScoresScene(GameWindow gameWindow, int score, ScoresList leaderboard) {
         this(gameWindow, score);
         fromMultiplayer = true;
@@ -60,7 +71,8 @@ public class ScoresScene extends BaseScene {
     }
 
     /**
-     * Creates the scene, without providing a new score to check
+     * Creates the scene, without providing a new score to check. Use when coming directly from the
+     * menu
      *
      * @param gameWindow the game window
      */
@@ -69,6 +81,9 @@ public class ScoresScene extends BaseScene {
     }
 
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void build() {
 
@@ -181,6 +196,9 @@ public class ScoresScene extends BaseScene {
 
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void initialise() {
 
@@ -290,6 +308,8 @@ public class ScoresScene extends BaseScene {
 
     /**
      * Handle key presses
+     *
+     * @param keyEvent the key event
      */
     public void onKeyPressed(KeyEvent keyEvent) {
         var keyCode = keyEvent.getCode();
@@ -305,7 +325,9 @@ public class ScoresScene extends BaseScene {
      */
     private class HiScoresList extends ScoresList {
 
-
+        /**
+         * Creates a new HiScoresList with default scores
+         */
         public HiScoresList() {
             this(List.of(
                     "Player 1: 100",
@@ -321,12 +343,17 @@ public class ScoresScene extends BaseScene {
             ));
         }
 
+        /**
+         * Creates a new HiScoresList with the given scores
+         *
+         * @param scores the scores to display
+         */
         public HiScoresList(List<String> scores) {
             super(scores);
         }
 
         /**
-         * Rebuilds the scores list. Called whenever the scores list is modified.
+         * {@inheritDoc}
          */
         @Override
         public void rebuild() {

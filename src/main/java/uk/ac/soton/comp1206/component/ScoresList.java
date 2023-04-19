@@ -28,11 +28,31 @@ import org.apache.logging.log4j.Logger;
  */
 public class ScoresList extends GridPane {
 
+    /**
+     * The comparator used to sort the scores
+     */
     public static final Comparator<Score> scoreComparator = (a, b) -> b.score - a.score;
-    protected static final int MAX_LIST_LENGTH = 10;
+    /**
+     * The maximum number of scores to display
+     */
+    public static final int MAX_LIST_LENGTH = 10;
+
+    /**
+     * Logger
+     */
     private static final Logger logger = LogManager.getLogger(ScoresList.class);
+
+    /**
+     * The scores to display
+     */
     public final ListProperty<Score> scores;
+
+    /**
+     * If {@code true}, the {@link ScoresList} is not allowed to update. This is used to prevent
+     * conflicts before the scores are revealed.
+     */
     protected boolean frozen = true;
+
     /**
      * Create a new {@code ScoresList} with placeholder scores
      */
@@ -163,8 +183,10 @@ public class ScoresList extends GridPane {
     }
 
     /**
-     * Returns the highest score in the list. Uses {@code min()} because the comparator sorts in
-     * descending order.
+     * Returns the highest score in the list. (Uses {@code Stream.min()} because the comparator
+     * sorts in descending order.)
+     *
+     * @return the highest score
      */
     public Score max() {
         return scores.stream()
@@ -176,6 +198,8 @@ public class ScoresList extends GridPane {
 
     /**
      * Returns the lowest score in the list.
+     *
+     * @return the lowest score
      */
     public Score min() {
         return scores.stream()
@@ -190,11 +214,31 @@ public class ScoresList extends GridPane {
      */
     public static class Score {
 
+        /**
+         * The username attached to this score
+         */
         public String username;
+
+        /**
+         * The score
+         */
         public int score;
+
+        /**
+         * The nodes used to display this score (for animation)
+         */
         public Node[] nodes = new Node[3];
+
+        /**
+         * The type of score
+         */
         public ScoreType type = ScoreType.NORMAL;
+
+        /**
+         * The username property. Used for new scores to allow the name to be entered
+         */
         public StringProperty usernameProperty;
+
         /**
          * Create a new score
          *
@@ -289,8 +333,26 @@ public class ScoresList extends GridPane {
             return username + ":" + score;
         }
 
+        /**
+         * Types of score
+         */
         public enum ScoreType {
-            NORMAL, MYSCORE, NEWSCORE, DIED
+            /**
+             * A normal score
+             */
+            NORMAL,
+            /**
+             * The player's own score
+             */
+            MYSCORE,
+            /**
+             * A score that displays a text field for the player to enter their name
+             */
+            NEWSCORE,
+            /**
+             * The player has died in a multiplayer game
+             */
+            DIED
         }
     }
 

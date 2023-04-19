@@ -81,9 +81,6 @@ public class GameWindow {
         logger.info("Loading resources");
 
         //We need to load fonts here due to the Font loader bug with spaces in URLs in the CSS files
-        Font.loadFont(getClass().getResourceAsStream("/style/Orbitron-Regular.ttf"), 32);
-        Font.loadFont(getClass().getResourceAsStream("/style/Orbitron-Bold.ttf"), 32);
-        Font.loadFont(getClass().getResourceAsStream("/style/Orbitron-ExtraBold.ttf"), 32);
         Font.loadFont(getClass().getResourceAsStream("/style/manaspace.ttf"), 32);
     }
 
@@ -102,36 +99,66 @@ public class GameWindow {
     }
 
     /**
+     * Starts the multiplayer game
+     *
      * @param username the player's nickname in the current channel
      */
     public void startMultiplayerGame(String username) {
         loadScene(new MultiplayerScene(this, username));
     }
 
+    /**
+     * Display the multiplayer lobby
+     */
     public void startLobby() {
         loadScene(new LobbyScene(this));
     }
 
+    /**
+     * Display the instructions screen
+     */
     public void startInstructions() {
         loadScene(new InstructionsScene(this));
     }
 
+    /**
+     * Display the settings screen
+     */
     public void startSettings() {
         loadScene(new SettingsScene(this));
     }
 
+    /**
+     * Display high scores
+     */
     public void startScores() {
         loadScene(new ScoresScene(this));
     }
 
+    /**
+     * Display the game over screen
+     *
+     * @param score the player's score in the current game
+     */
     public void startScores(int score) {
         loadScene(new ScoresScene(this, score));
     }
 
+    /**
+     * Display the game over screen, with the specified multiplayer leaderboard replacing the local
+     * scores
+     *
+     * @param score       the player's score in the current game
+     * @param leaderboard the multiplayer leaderboard
+     */
     public void startScores(int score, ScoresList leaderboard) {
         loadScene(new ScoresScene(this, score, leaderboard));
     }
 
+    /**
+     * Closes down the application.
+     * If the exit splash is enabled, it will be shown before the application closes.
+     */
     public void exitGame() {
         if (SHOW_EXIT_SPLASH && SHOW_SPLASH_SCREEN) {
             loadScene(new SplashScene(this, true));

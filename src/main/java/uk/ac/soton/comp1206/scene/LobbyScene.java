@@ -90,7 +90,9 @@ public class LobbyScene extends BaseScene {
 
     }
 
-
+    /**
+     * Sets up the channel list
+     */
     public void setupChannelList() {
         channelListContainer = new VBox();
         channelListContainer.getStyleClass().add("generic-box");
@@ -110,6 +112,7 @@ public class LobbyScene extends BaseScene {
         loading.getStyleClass().add("heading");
         channelList.getChildren().add(loading);
 
+        // Text field for creating a new channel
         TextField newChannelName = new TextField();
         newChannelName.setPromptText("Make a new channel...");
         newChannelName.setOnKeyPressed(e -> {
@@ -123,12 +126,15 @@ public class LobbyScene extends BaseScene {
             }
         });
         newChannelName.setMaxWidth((double) gameWindow.getWidth() / 4.5);
+        // Make sure only the chat box is focused. If keyboard controls are needed,
+        // the user can use "/create"
         newChannelName.setFocusTraversable(false);
         channelListContainer.getChildren().add(newChannelName);
 
         executor = Executors.newSingleThreadScheduledExecutor();
 
-        executor.scheduleAtFixedRate(this::refreshChannelList, 10, 10,
+        int refreshDelay = 10;
+        executor.scheduleAtFixedRate(this::refreshChannelList, refreshDelay, refreshDelay,
                 java.util.concurrent.TimeUnit.SECONDS);
     }
 
@@ -160,6 +166,9 @@ public class LobbyScene extends BaseScene {
         });
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void initialise() {
 
@@ -170,6 +179,11 @@ public class LobbyScene extends BaseScene {
         refreshChannelList();
     }
 
+    /**
+     * Handle key presses
+     *
+     * @param keyEvent the key event
+     */
     private void onKeyPressed(KeyEvent keyEvent) {
         var keyCode = keyEvent.getCode();
         if (keyCode == KeyCode.ESCAPE) {
@@ -177,6 +191,9 @@ public class LobbyScene extends BaseScene {
         }
     }
 
+    /**
+     * Exit the lobby (and exit the current channel)
+     */
     private void exit() {
         communicator.send("PART");
         if (executor != null) {
@@ -185,6 +202,11 @@ public class LobbyScene extends BaseScene {
         gameWindow.startMenu();
     }
 
+    /**
+     * Handle incoming messages from the server
+     *
+     * @param communication the message
+     */
     private void onCommunication(String communication) {
         var split = communication.split(" ", 2);
 
@@ -439,10 +461,20 @@ public class LobbyScene extends BaseScene {
             userList.getChildren().add(title);
         }
 
+        /**
+         * Sets the username of the user
+         *
+         * @param username The username to set
+         */
         public void setUsername(String username) {
             this.username.set(username);
         }
 
+        /**
+         * Displays a message in the chat box
+         *
+         * @param message The message to add
+         */
         public void addMessage(Message message) {
             logger.info(Colour.green("Adding message: " + message.toString()));
 
@@ -479,6 +511,11 @@ public class LobbyScene extends BaseScene {
             }
         }
 
+        /**
+         * Adds a row to the message grid
+         *
+         * @param nodes The nodes to add to the row
+         */
         private void addRow(Node... nodes) {
             int row = messageGrid.getRowCount();
             for (int i = 0; i < nodes.length; i++) {
@@ -486,6 +523,12 @@ public class LobbyScene extends BaseScene {
             }
         }
 
+        /**
+         * Sends a message to the server. If the message starts with a slash, it is treated as a
+         * command
+         *
+         * @param message The message to send
+         */
         private void sendMessage(String message) {
             if (message.startsWith("/")) {
                 addMessage(new Message(username.get() + ":" + message, MessageType.COMMAND));
@@ -499,30 +542,59 @@ public class LobbyScene extends BaseScene {
             }
         }
 
+        /**
+         * Executes a command with no arguments
+         *
+         * @param command The command to execute, with no leading slash
+         */
         public void sendCommand(String command) {
             executeCommand("/" + command);
         }
 
+        /**
+         * Executes a command
+         *
+         * @param command  The command to execute, with no leading slash
+         * @param argument The argument to pass to the command
+         */
         public void sendCommand(String command, String argument) {
             executeCommand("/" + command + " " + argument);
         }
 
+        /**
+         * Displays the start button and allows it to be clicked
+         */
         public void showStartButton() {
             Platform.runLater(() -> this.startButton.setVisible(true));
         }
 
+        /**
+         * Hides the start button and prevents it from being clicked
+         */
         public void hideStartButton() {
             Platform.runLater(() -> this.startButton.setVisible(false));
         }
 
+        /**
+         * Displays the leave button and allows it to be clicked
+         */
         public void showLeaveButton() {
             Platform.runLater(() -> this.leaveButton.setVisible(true));
         }
 
+        /**
+         * Hides the leave button and prevents it from being clicked
+         */
         public void hideLeaveButton() {
             Platform.runLater(() -> this.leaveButton.setVisible(false));
         }
 
+        /**
+         * Executes a command.<br> The command string should be in the format
+         * "{@code /<command> <argument (optional)>}"
+         *
+         * @param message the command to execute, including the leading slash
+         */
         private void executeCommand(String message) {
             var split = message.split(" +", 2);
             var command = split[0].substring(1).toLowerCase();
@@ -606,43 +678,100 @@ public class LobbyScene extends BaseScene {
             }
         }
 
+        /**
+         * Displays a message in the chat box
+         *
+         * @param message The message to add, in the format "{@code sender:message}"
+         */
         public void addMessage(String message) {
             addMessage(new Message(message));
         }
 
+        /**
+         * Displays a system message in the chat box. System messages are displayed in grey to
+         * distinguish them from chat messages, and the sender is set to "System".
+         *
+         * @param message The content of the message
+         */
         public void addSystemMessage(String message) {
             addMessage(new Message("System:" + message, MessageType.SYSTEM));
         }
 
+        /**
+         * Displays a system message in the chat box. System messages are displayed in grey to
+         * distinguish them from chat messages.
+         *
+         * @param sender  The sender of the message (instead of "System")
+         * @param message The content of the message
+         */
         public void addSystemMessage(String sender, String message) {
             addMessage(new Message(sender + ":" + message, MessageType.SYSTEM));
         }
 
+        /**
+         * Displays an error message in the chat box. Error messages are displayed in red.
+         *
+         * @param message The content of the message
+         */
         public void addErrorMessage(String message) {
             addMessage(new Message("Error:" + message, MessageType.ERROR));
         }
 
+        /**
+         * Scrolls the chat box to the bottom
+         */
         private void jumpToBottom() {
             chatBox.layout();
             Platform.runLater(() -> chatBox.setVvalue(1.0f));
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         public void requestFocus() {
             textField.requestFocus();
         }
 
 
+        /**
+         * Represents any message that can be displayed in the chat box
+         */
         public class Message {
 
+            /**
+             * The style for a message sent by the current user
+             */
             public static final String MY_USER_STYLE = "-fx-text-fill: #3FFF73; -fx-underline: true;";
+
             private static final DateTimeFormatter formatter =
                     DateTimeFormatter.ofPattern("HH:mm");
+
+            /**
+             * The time that the message was received
+             */
             public final String timeStamp;
+
+            /**
+             * The username of the sender
+             */
             public final String sender;
+
+            /**
+             * The content of the message
+             */
             public final String content;
+
+            /**
+             * The message type
+             */
             public MessageType type = MessageType.GENERAL;
 
+            /**
+             * Creates a message from the given {@link String}.
+             *
+             * @param text text representing the message, in the format "sender:content"
+             */
             public Message(String text) {
                 var split = text.split(":", 2);
                 this.sender = split[0];
@@ -653,16 +782,35 @@ public class LobbyScene extends BaseScene {
                 this.timeStamp = "(" + formatter.format(LocalDateTime.now()) + ")";
             }
 
+            /**
+             * Creates a new message from the given {@link String}, with the given type.
+             *
+             * @param text text representing the message, in the format "sender:content"
+             * @param type the message type
+             */
             public Message(String text, MessageType type) {
                 this(text);
                 this.type = type;
             }
 
+            /**
+             * Gets the style the given username. This is based on a hash of the sender's name, so
+             * is always the same for the same username.
+             *
+             * @param username the username to get the style for
+             * @return the style, in the format "-fx-text-fill: #RRGGBB;"
+             */
             public static String getUserStyle(String username) {
                 return "-fx-text-fill: " + Colour.hsv((username + " ").hashCode() % 360, 0.8, 1)
                         + ";";
             }
 
+            /**
+             * Gets the colour for this message's sender. This is based on a hash of the sender's
+             * name, so is always the same for the same username.
+             *
+             * @return the colour, in the format "#RRGGBB"
+             */
             public String getUserColour() {
                 if (type == MessageType.SYSTEM) {
                     return "#A0A0A0";
@@ -674,6 +822,13 @@ public class LobbyScene extends BaseScene {
                 return Colour.hsv((sender + " ").hashCode() % 360, 0.8, 1);
             }
 
+            /**
+             * Gets the style for this message's sender. This uses {@link #getUserColour()} to get
+             * the colour.
+             *
+             * @return the style, in string format
+             * @see #getUserColour()
+             */
             public String getUserStyle() {
                 String result = "-fx-text-fill: " + getUserColour() + ";";
                 if (type == MessageType.SYSTEM || type == MessageType.COMMAND
@@ -685,6 +840,9 @@ public class LobbyScene extends BaseScene {
                 return result;
             }
 
+            /**
+             * Represents different types of messages.
+             */
             public enum MessageType {
                 GENERAL, ME, COMMAND, SYSTEM, ERROR
             }

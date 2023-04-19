@@ -16,7 +16,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 import javafx.util.Pair;
@@ -137,18 +136,18 @@ public class GameBlock extends Canvas {
             var col = COLOURS[-val - 1]; // find the original color of this block
 
             if (val == -1) {
-                paintColor(Color.rgb(255, 0, 0, 0.7));
+                paintImage(Color.rgb(255, 0, 0, 0.7));
             } else {
-                paintColor(Color.RED.interpolate(col, 0.3));
+                paintImage(Color.RED.interpolate(col, 0.3));
             }
 
         } else if (val >= 100) { // preview -> paint semi-transparent
             var col = COLOURS[val - 100];
-            paintColor(Color.TRANSPARENT.interpolate(col, 0.7));
+            paintImage(Color.TRANSPARENT.interpolate(col, 0.7));
 
         } else {
             // If the block is not empty, paint with the colour represented by the value
-            paintColor(COLOURS[val]);
+            paintImage(COLOURS[val]);
         }
 
         if (isPivot) {
@@ -162,23 +161,13 @@ public class GameBlock extends Canvas {
     private void paintEmpty() {
         var gc = getGraphicsContext2D();
 
-        //Clear
+        // clear the canvas
         gc.clearRect(0, 0, width, height);
 
-        //Fill
-        //gc.setFill(Color.WHITE);
-        gc.setFill(Color.rgb(100, 100, 100, 0.3));
-        //gc.fillRoundRect(0, 0, width, height, CORNER_RADIUS, CORNER_RADIUS);
-
-        //gc.drawImage(Multimedia.getImage("blockw.png"), 0, 0, width, height);
-
-        //Border
+        // draw the border
         gc.setLineWidth(1);
         gc.setStroke(Color.rgb(150, 150, 150, 0.7));
-
         gc.strokeRoundRect(0, 0, width, height, corner_radius, corner_radius);
-
-        //paintImage(Color.rgb(100, 100, 100, 0.5));
     }
 
     /**
@@ -187,28 +176,78 @@ public class GameBlock extends Canvas {
      * @param color the color to paint the block with
      */
     private void paintImage(Color color) {
+        var gc = getGraphicsContext2D();
 
+        // clear the canvas
+        gc.clearRect(0, 0, width, height);
+
+        // Check if the image is already cached
         var key = new Pair<>(value.get(), hovered.get());
+
+        Image image;
+
         if (imageCache.containsKey(key)) {
-            var image = imageCache.get(key);
-            getGraphicsContext2D().drawImage(image, 0, 0, width, height);
-            return;
+
+            // Get the cached image
+            image = imageCache.get(key);
+
+        } else {
+
+            // If the image is not yet cached, generate it
+            image = processImage(BASE_IMAGE, color);
+
+            logger.debug("Generated new image with properties: Color={}, Hovered={}", color, hovered.get());
+
+            // Cache the image for future use
+            imageCache.put(key, image);
+
         }
 
-        WritableImage newImage = new WritableImage((int) BASE_IMAGE.getWidth(),
-                (int) BASE_IMAGE.getHeight());
-        var reader = BASE_IMAGE.getPixelReader();
+        // Draw the image
+        gc.drawImage(image, 0, 0, width, height);
+    }
+
+    /**
+     * Generate a new image from the base image, recolored to the given {@linkplain Color}.
+     * <br>
+     * Iterates through all the pixels in the base image and changes their colour based on the
+     * colour in the base image.
+     *
+     * <ul>
+     *     <li>White pixels are replaced with the given {@linkplain Color}</li>
+     *     <li>Black pixels are replaced with a darkened version of the given {@linkplain Color}</li>
+     *     <li>Transparent pixels are left unchanged</li>
+     *     <li>All other pixels are slightly tinted with the given {@linkplain Color}.<br>
+     *     If this {@link GameBlock} is currently hovered, these pixels will be replaced with white</li>
+     * </ul>
+     * <p>
+     * This process takes quite a lot of processor time, so should be cached if used frequently.
+     *
+     * @param baseImage the base image to recolor
+     * @param color     the color to recolor the image with
+     * @return the generated image
+     */
+    private Image processImage(Image baseImage, Color color) {
+        // Create a new image of the same size as the base image
+        WritableImage newImage = new WritableImage((int) baseImage.getWidth(),
+                (int) baseImage.getHeight());
         var writer = newImage.getPixelWriter();
 
+        // Get the pixel reader for the base image
+        var reader = baseImage.getPixelReader();
+
+        // Loop through all the pixels in the image and recolor them
         for (int x = 0; x < newImage.getWidth(); x++) {
             for (int y = 0; y < newImage.getHeight(); y++) {
 
-                if (reader.getColor(x, y).equals(Color.WHITE)) { // The inside of the block
+                if (reader.getColor(x, y).equals(Color.WHITE)) {  // The inside of the block
                     writer.setColor(x, y, color);
-                } else if (reader.getColor(x, y).equals(Color.BLACK)) { // The shadow at the bottom
+
+                } else if (reader.getColor(x, y).equals(Color.BLACK)) {  // The shadow at the bottom
                     writer.setColor(x, y, color.interpolate(Color.BLACK, 0.2));
-                } else { // the border of the block
-                    // Sets the border to white if the block is hovered
+
+                } else {  // the border of the block
+                    // Sets the border to white if the block is hovered over
                     if (hovered.get() && reader.getColor(x, y).isOpaque()) {
                         writer.setColor(x, y, Color.WHITE);
                     } else {
@@ -219,33 +258,7 @@ public class GameBlock extends Canvas {
             }
         }
 
-        imageCache.put(key, newImage);
-
-        var gc = getGraphicsContext2D();
-        gc.drawImage(newImage, 0, 0, width, height);
-    }
-
-    /**
-     * Paint this canvas with the given colour
-     *
-     * @param colour the colour to paint
-     */
-    private void paintColor(Paint colour) {
-
-        var gc = getGraphicsContext2D();
-
-        //Clear
-        gc.clearRect(0, 0, width, height);
-
-        //Colour fill
-        //gc.setFill(colour);
-        //gc.fillRoundRect(0, 0, width, height, CORNER_RADIUS, CORNER_RADIUS);
-
-        //Border
-        //gc.setStroke(Color.GREY);
-        //gc.strokeRoundRect(0, 0, width, height, CORNER_RADIUS, CORNER_RADIUS);
-
-        paintImage((Color) colour);
+        return newImage;
     }
 
     private void paintPivot() {
@@ -351,7 +364,7 @@ public class GameBlock extends Canvas {
             val = -1 - val;
         }
 
-        //logger.info("Fading out block at " + x + ", " + y + " with value " + value.get());
+        logger.debug("Fading out block at " + x + ", " + y + " with value " + value.get());
 
         var child = new GameBlock(null, x, y, width, height);
         child.value.set(val);

@@ -1,154 +1,152 @@
 .gamepane {
-    -fx-background-color: black;
-    -fx-text-fill: white;
-    -fx-font-family: 'manaspace';
+  -fx-background-color: black;
+  -fx-text-fill: white;
+  -fx-font-family: 'manaspace';
 }
 
 .intro {
-    -fx-background-color: black;
+  -fx-background-color: black;
 }
 
 .generic-box {
-    -fx-border-color: #606060;
-    -fx-border-width: 5;
-    -fx-border-radius: 0;
-    -fx-background-color: rgba(59, 59, 59, 0.8);
-    -fx-border-insets: 5;
-    -fx-background-insets: 5;
-    -fx-padding: 5;
+  -fx-border-color: #606060;
+  -fx-border-width: 5;
+  -fx-border-radius: 0;
+  -fx-background-color: rgba(59, 59, 59, 0.8);
+  -fx-border-insets: 5;
+  -fx-background-insets: 5;
+  -fx-padding: 5;
 }
 
 Label {
-    -fx-border-style: hidden;
-}
-
-.menu-background {
-    -fx-background-image: url("../images/1.jpg");
-    -fx-background-size: cover;
-    -fx-background-color: black;
+  -fx-border-style: hidden;
 }
 
 .challenge-background {
-    -fx-background-image: url("../images/pixelstars_(by_@anasabdin).gif");
-    -fx-background-color: black;
-    -fx-background-size: cover;
+  -fx-background-image: url("../images/pixelstars_(by_@anasabdin).gif");
+  -fx-background-color: black;
+  -fx-background-size: cover;
+}
+
+.main-background {
+  -fx-background-image: url("../images/pixelstars_(by_@anasabdin).gif");
+  -fx-background-color: black;
+  -fx-background-size: cover;
 }
 
 .menu {
-    -fx-padding: 0;
+  -fx-padding: 0;
 }
 
-
-
 .bigtitle {
-    -fx-fill: yellow;
-    
-    -fx-font-size: 64px;
-    -fx-font-weight: 900;
-    -fx-border-color: black;
-    -fx-stroke: black;
-    -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
+  -fx-fill: yellow;
+
+  -fx-font-size: 64px;
+  -fx-font-weight: 900;
+  -fx-border-color: black;
+  -fx-stroke: black;
+  -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
 }
 
 .title {
-    -fx-text-fill: white;
-    
-    -fx-font-size: 32px;
-    -fx-underline: true;
-    -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
+  -fx-text-fill: white;
+
+  -fx-font-size: 32px;
+  -fx-underline: true;
+  -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
 }
 
 .subtitle {
-    -fx-text-fill: grey;
+  -fx-text-fill: grey;
 
-    -fx-font-size: 20px;
-    -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
+  -fx-font-size: 20px;
+  -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
 }
 
 .heading {
-    -fx-text-fill: white;
-    
-    -fx-font-size: 20px;
-    -fx-font-weight: 700;
-    -fx-border-color: black;
-    -fx-stroke: black;
-    -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
+  -fx-text-fill: white;
+
+  -fx-font-size: 20px;
+  -fx-font-weight: 700;
+  -fx-border-color: black;
+  -fx-stroke: black;
+  -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
 }
 
 .score {
-    -fx-text-fill: lime;
-    
-    -fx-font-size: 36px;
-    -fx-text-alignment: center;
+  -fx-text-fill: lime;
+
+  -fx-font-size: 36px;
+  -fx-text-alignment: center;
 }
 
 .level {
-    -fx-text-fill: red;
-    
-    -fx-font-size: 24px;
-    -fx-text-alignment: center;
-    /*-fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);*/
+  -fx-text-fill: red;
+
+  -fx-font-size: 24px;
+  -fx-text-alignment: center;
+  /*-fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);*/
 }
 
 .regularlabel {
-    -fx-text-fill: white;
-    
-    -fx-font-size: 36px;
-    -fx-text-alignment: center;
+  -fx-text-fill: white;
+
+  -fx-font-size: 36px;
+  -fx-text-alignment: center;
 }
 
-.smalllabel{
-    -fx-text-fill: white;
-    
-    -fx-font-size: 24px;
-    -fx-text-alignment: center;
+.smalllabel {
+  -fx-text-fill: white;
+
+  -fx-font-size: 24px;
+  -fx-text-alignment: center;
 }
 
 .hiscore {
-    -fx-text-fill: orange;
-    
-    -fx-font-size: 24px;
-    -fx-font-weight: 700;
-    -fx-text-alignment: center;
-    -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
+  -fx-text-fill: orange;
+
+  -fx-font-size: 24px;
+  -fx-font-weight: 700;
+  -fx-text-alignment: center;
+  -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
 }
 
 .lives {
-    -fx-text-fill: yellow;
-    
-    -fx-font-size: 36px;
-    -fx-font-weight: 700;
-    -fx-border-color: black;
-    -fx-stroke: black;
-    -fx-text-alignment: center;
-    -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
+  -fx-text-fill: yellow;
+
+  -fx-font-size: 36px;
+  -fx-font-weight: 700;
+  -fx-border-color: black;
+  -fx-stroke: black;
+  -fx-text-alignment: center;
+  -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
 }
 
 .multiplier {
-    -fx-text-fill: white;
-    
-    -fx-font-size: 36px;
-    -fx-text-alignment: center;
-    -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
+  -fx-text-fill: white;
+
+  -fx-font-size: 36px;
+  -fx-text-alignment: center;
+  -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
 }
 
 .scores-list {
-    -fx-font-size: 20px;
-    
-    -fx-text-fill: white;
+  -fx-font-size: 20px;
+
+  -fx-text-fill: white;
 }
 
 .scores-item {
-    -fx-font-size: 26px;
-    
-    -fx-text-fill: white;
+  -fx-font-size: 26px;
+
+  -fx-text-fill: white;
 }
 
 .score-entry-box {
-    -fx-font-size: 24px;
-    
-    -fx-text-fill: white;
-    -fx-padding: 2;
+  -fx-font-size: 24px;
+
+  -fx-text-fill: white;
+  -fx-padding: 2;
 }
 
 .scorer {
@@ -156,29 +154,29 @@ Label {
 }
 
 .my-score {
-    -fx-text-fill: cyan;
-    -fx-underlined: true;
+  -fx-text-fill: cyan;
+  -fx-underlined: true;
 }
 
 .dead-score {
-    -fx-strikethrough: true;
-    -fx-text-fill: #a6a5a5;
+  -fx-strikethrough: true;
+  -fx-text-fill: #a6a5a5;
 }
 
 .score-lives-3 {
-    -fx-text-fill: green;
+  -fx-text-fill: green;
 }
 
 .score-lives-2 {
-    -fx-text-fill: yellow;
+  -fx-text-fill: yellow;
 }
 
 .score-lives-1 {
-    -fx-text-fill: orange;
+  -fx-text-fill: orange;
 }
 
 .score-lives-0 {
-    -fx-text-fill: red;
+  -fx-text-fill: red;
 }
 
 .points {
@@ -189,118 +187,119 @@ Label {
 }
 
 .channelItem {
-    -fx-text-fill: white;
-    
-    -fx-font-size: 16px;
-    -fx-font-weight: 700;
-    -fx-border-color: black;
-    -fx-stroke: black;
+  -fx-text-fill: white;
+
+  -fx-font-size: 16px;
+  -fx-font-weight: 700;
+  -fx-border-color: black;
+  -fx-stroke: black;
 }
+
 .channelItem.selected {
-    -fx-text-fill: yellow;
+  -fx-text-fill: yellow;
 }
 
 .leaderboard {
-    -fx-font-size: 16px;
+  -fx-font-size: 16px;
 }
 
 .gameBox {
-    -fx-padding: 10;
-    -fx-background-color: rgba(0, 0, 0, 0.5);
-    -fx-border-color: white;
-    -fx-border-width: 1;
+  -fx-padding: 10;
+  -fx-background-color: rgba(0, 0, 0, 0.5);
+  -fx-border-color: white;
+  -fx-border-width: 1;
 }
 
 .scroller {
-    -fx-background-color: transparent;
+  -fx-background-color: transparent;
 }
 
 .scroller .viewport {
-    -fx-background-color: transparent;
+  -fx-background-color: transparent;
 }
 
 .messages {
-    -fx-background-color: transparent;
-    -fx-font-size: 12px;
-    -fx-text-fill: white;
+  -fx-background-color: transparent;
+  -fx-font-size: 12px;
+  -fx-text-fill: white;
 
 }
 
 .messages Text {
-    -fx-text-fill: white;
+  -fx-text-fill: white;
 }
 
 TextField {
-    -fx-border-color: white;
-    -fx-border-width: 1px;
-    -fx-background-color: rgba(0,0,0,0.5);
-    -fx-text-fill: white;
-    -fx-prompt-text-fill: grey;
+  -fx-border-color: white;
+  -fx-border-width: 1px;
+  -fx-background-color: rgba(0, 0, 0, 0.5);
+  -fx-text-fill: white;
+  -fx-prompt-text-fill: grey;
 }
 
 Button {
-    -fx-background-color: rgba(0,0,0,0.5);
-    -fx-text-fill: white;
-    -fx-border-color: white;
-    -fx-border-width: 2px;
-    -fx-border-radius: 0;
+  -fx-background-color: rgba(0, 0, 0, 0.5);
+  -fx-text-fill: white;
+  -fx-border-color: white;
+  -fx-border-width: 2px;
+  -fx-border-radius: 0;
 }
 
 .sendButton {
-    -fx-text-fill: white;
-    -fx-border-color: white;
+  -fx-text-fill: white;
+  -fx-border-color: white;
 }
 
 .startButton {
-    -fx-text-fill: #00ff66;
-    -fx-border-color: #00ff66;
+  -fx-text-fill: #00ff66;
+  -fx-border-color: #00ff66;
 }
 
 .leaveButton {
-    -fx-text-fill: #ff0000;
-    -fx-border-color: #ff0000;
+  -fx-text-fill: #ff0000;
+  -fx-border-color: #ff0000;
 }
 
 Button .disabled {
-    -fx-text-fill: grey;
-    -fx-border-color: grey;
+  -fx-text-fill: grey;
+  -fx-border-color: grey;
 }
 
 .menuItem {
-    -fx-text-fill: white;
-    -fx-border-style: hidden;
-    -fx-font-size: 30px;
-    -fx-background-color: none;
-    -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
+  -fx-text-fill: white;
+  -fx-border-style: hidden;
+  -fx-font-size: 30px;
+  -fx-background-color: none;
+  -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
 }
 
 .menuItem:hover {
-    -fx-text-fill: green;
+  -fx-text-fill: green;
 }
 
 .menuItem.selected {
-    -fx-text-fill: #7dd50b;
+  -fx-text-fill: #7dd50b;
 }
 
 .playerBox {
-    -fx-font-size: 14px;
-    
+  -fx-font-size: 14px;
+
 }
 
 .playerBox Text {
-    -fx-fill: white;
+  -fx-fill: white;
 }
 
 .myname {
-    -fx-font-weight: 700;
+  -fx-font-weight: 700;
 }
 
 .instructions {
-    -fx-font-size: 10px;
-    
-    -fx-fill: white;
+  -fx-font-size: 10px;
+
+  -fx-fill: white;
 }
 
 .titleart {
-    -fx-font-family: monospace;
+  -fx-font-family: monospace;
 }

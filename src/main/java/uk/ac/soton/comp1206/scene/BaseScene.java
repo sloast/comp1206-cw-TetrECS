@@ -15,7 +15,14 @@ public abstract class BaseScene {
 
     protected final GameWindow gameWindow;
 
+    /**
+     * The root pane
+     */
     protected GamePane root;
+
+    /**
+     * The {@link Scene} object for this scene
+     */
     protected Scene scene;
 
     /**
@@ -51,6 +58,23 @@ public abstract class BaseScene {
         return scene;
     }
 
+    /**
+     * Set up the basic UI elements that are required for every scene, and return the
+     * {@link BorderPane} that elements can be added to.
+     *
+     * @return the main pane
+     */
+    protected BorderPane setupMain() {
+        return setupMain("main-background");
+    }
+
+    /**
+     * Set up the basic UI elements that are required for every scene, and return the
+     * {@link BorderPane} that elements can be added to.
+     *
+     * @param styleClass the style class to apply to the background
+     * @return the main pane
+     */
     protected BorderPane setupMain(String styleClass) {
         root = new GamePane(gameWindow.getWidth(), gameWindow.getHeight());
 

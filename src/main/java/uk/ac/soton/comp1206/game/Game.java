@@ -128,7 +128,7 @@ public class Game {
     /**
      * Initialise a new game and set up anything that needs to be done at the start
      */
-    public void initialiseGame() {
+    private void initialiseGame() {
         logger.info("Initialising game");
 
         nextPiece();
@@ -144,6 +144,7 @@ public class Game {
             onDied();
         } else {
             nextPiece();
+            multiplier.set(1);
             resetTimer();
         }
 
@@ -153,7 +154,6 @@ public class Game {
      * When the player loses all their lives
      */
     private void onDied() {
-        running = false;
         logger.info(Colour.colour("Game over!", TextColour.PURPLE, TextMode.BOLD));
 
         stop();
@@ -163,13 +163,12 @@ public class Game {
      * End the game and reset the grid
      */
     public void stop() {
+        running = false;
+
         logger.info(Colour.colour("Game stopped.", TextColour.PURPLE, TextMode.BOLD));
 
         grid.reset();
-        //currentPieceBoard.setPiece(null);
-        //nextPieceBoard.setPiece(null);
 
-        running = false;
         if (timer != null) {
             timer.cancel();
         }
@@ -189,7 +188,7 @@ public class Game {
     /**
      * Resets the timer
      */
-    void resetTimer() {
+    private void resetTimer() {
         gameLoopListener.onGameLoop(getTimerDelayMillis());
 
         // Reset internal timer
@@ -255,6 +254,8 @@ public class Game {
 
         //Place the piece
         if (grid.canPlayPiece(currentPiece, x, y)) {
+            logger.info(Colour.cyan(
+                    "Placing piece " + currentPiece.getValue() + " at (" + x + ", " + y + ")"));
             grid.playPiece(currentPiece, x, y);
             Multimedia.playSound("place.wav");
             nextPiece();
@@ -262,7 +263,10 @@ public class Game {
             resetTimer();
             refreshPreview();
         } else {
-            Multimedia.playSound("fail.wav");
+            logger.info(Colour.orange(
+                    "Cannot place piece " + currentPiece.getValue() + " at (" + x + ", " + y
+                            + ")"));
+            Multimedia.playSound("fail.wav", 1.5);
         }
     }
 
@@ -330,7 +334,7 @@ public class Game {
             return;
         }
 
-        //logger.info("Rotating current piece");
+        logger.debug("Rotating current piece");
 
         for (int i = 0; i < 3; i++) {
             currentPiece.rotate();
@@ -348,7 +352,7 @@ public class Game {
         }
 
         // removed for spamming the console
-        //logger.info("refresh");
+        //logger.debug("refresh");
 
         grid.resetAllTempValues();
         if (hoveredBlock != null) {
@@ -374,6 +378,7 @@ public class Game {
         int clearedRows = 0;
         var clearedBlocks = new HashSet<Vector2>();
 
+        // Check for cleared rows
         for (int y = 0; y < rows; y++) {
             boolean full = true;
             for (int x = 0; x < cols; x++) {
@@ -390,6 +395,7 @@ public class Game {
             }
         }
 
+        // Check for cleared columns
         for (int x = 0; x < cols; x++) {
             boolean full = true;
             for (int y = 0; y < rows; y++) {
@@ -409,16 +415,17 @@ public class Game {
         score(clearedRows, clearedBlocks.size());
 
         if (clearedRows > 0) {
-            logger.info(Colour.colour(
-                    "Cleared " + clearedRows + (clearedRows == 1 ? " row" : " rows"),
-                    TextColour.GREEN, TextMode.ITALIC));
+            logger.info(
+                    Colour.colour("Cleared " + clearedRows + (clearedRows == 1 ? " row" : " rows"),
+                            TextColour.GREEN, TextMode.ITALIC));
 
+            // Animate the blocks clearing
             lineClearedListener.onLineCleared(clearedBlocks);
 
+            // Remove the blocks
             for (var block : clearedBlocks) {
                 grid.set(block.x, block.y, 0);
             }
-
 
         }
     }
@@ -485,6 +492,8 @@ public class Game {
         currentPiece = nextPiece;
         nextPiece = GamePiece.createPiece(pieceQueue.remove(), random.nextInt(4));
 
+        logger.info("Getting next piece: " + (currentPiece == null ? "null" : currentPiece.getValue()));
+
         if (currentPiece == null || nextPiece.getValue() == currentPiece.getValue()) {
             nextPiece();
             return;
@@ -501,26 +510,49 @@ public class Game {
      */
     private void updatePieceBoards() {
         if (pieceBoardUpdateListener != null) {
-            pieceBoardUpdateListener.onNextPiece(currentPiece, nextPiece);
+            pieceBoardUpdateListener.updatePieceBoards(currentPiece, nextPiece);
         }
     }
 
+    /**
+     * Set the listener for when the piece boards are updated
+     *
+     * @param pieceBoardUpdateListener the listener to call
+     */
     public void setOnPieceBoardUpdate(PieceBoardUpdateListener pieceBoardUpdateListener) {
         this.pieceBoardUpdateListener = pieceBoardUpdateListener;
     }
 
+    /**
+     * Set the listener for when a line is cleared
+     *
+     * @param lineClearedListener the listener to call
+     */
     public void setOnLineCleared(LineClearedListener lineClearedListener) {
         this.lineClearedListener = lineClearedListener;
     }
 
+    /**
+     * Set the listener for when the game ends
+     *
+     * @param gameOverListener the listener to call
+     */
     public void setOnGameOver(GameOverListener gameOverListener) {
         this.gameOverListener = gameOverListener;
     }
 
+    /**
+     * Set the listener for when the game loop is updated (i.e. the timer is reset)
+     *
+     * @param gameLoopListener the listener to call
+     */
     public void setOnGameLoop(GameLoopListener gameLoopListener) {
         this.gameLoopListener = gameLoopListener;
     }
 
+    /**
+     * Swap the current piece with the next piece
+     */
     public void swapPieces() {
         if (!running) {
             return;
@@ -561,7 +593,7 @@ public class Game {
             level.set(score.get() / 1000);
             multiplier.set(multiplier.get() + 1);
 
-            logger.info(Colour.green("Scored {} points"), points);
+            logger.info(Colour.green(Colour.bold("Scored {} points")), points);
         } else {
             multiplier.set(1);
         }
@@ -578,17 +610,21 @@ public class Game {
             return;
         }
 
+        // enable keyboard mode
         if (!usingKeyboard) {
             usingKeyboard = true;
         }
 
+        // deselect the previous block
         if (hoveredBlock != null) {
             hoveredBlock.hoverExit();
         }
 
+        // select the new block
         hoveredBlock = block;
         block.hoverEnter();
 
+        // update visuals
         refreshPreview();
     }
 

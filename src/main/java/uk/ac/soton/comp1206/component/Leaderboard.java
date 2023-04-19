@@ -20,6 +20,10 @@ public class Leaderboard extends ScoresList {
 
     /**
      * Create an empty leaderboard
+     *
+     * @param scale the scale of the leaderboard
+     * @param maxWidth the maximum visual width of the leaderboard
+     * @param myUsername the username of the player
      */
     public Leaderboard(double scale, double maxWidth, String myUsername) {
         super(List.of());
@@ -89,6 +93,11 @@ public class Leaderboard extends ScoresList {
         });
     }
 
+    /**
+     * Set a player as dead (i.e. lost all their lives)
+     *
+     * @param username the username of the player
+     */
     public void setDead(String username) {
         Platform.runLater(() -> {
             for (Score s : scores) {
@@ -117,6 +126,12 @@ public class Leaderboard extends ScoresList {
         return strings;
     }
 
+    /**
+     * Return a list of the top players in the current game, in descending order of score
+     *
+     * @param limit the maximum number of players to return
+     * @return a {@code String[]} containing the usernames of the top players
+     */
     public String[] getTopPlayers(int limit) {
         return scores.stream()
                 .sorted(ScoresList.scoreComparator)

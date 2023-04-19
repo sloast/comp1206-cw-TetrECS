@@ -12,6 +12,9 @@ import uk.ac.soton.comp1206.game.GamePiece;
 import uk.ac.soton.comp1206.ui.GameWindow;
 import uk.ac.soton.comp1206.utils.Multimedia;
 
+/**
+ * The scene that displays the instructions and available {@linkplain GamePiece}s
+ */
 public class InstructionsScene extends BaseScene {
 
     private static final Logger logger = LogManager.getLogger(InstructionsScene.class);
@@ -25,6 +28,9 @@ public class InstructionsScene extends BaseScene {
         super(gameWindow);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void initialise() {
         logger.info("Initialising " + this.getClass().getName());
@@ -32,11 +38,14 @@ public class InstructionsScene extends BaseScene {
         scene.setOnKeyPressed(e -> onKeyPress());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void build() {
         logger.info("Building " + this.getClass().getName());
 
-        var mainPane = setupMain("menu-background");
+        var mainPane = setupMain();
 
         var instructions = new VBox();
         instructions.alignmentProperty().set(Pos.CENTER);
@@ -76,7 +85,10 @@ public class InstructionsScene extends BaseScene {
         instructions.getChildren().add(pieceGrid);
     }
 
-    public void onKeyPress() {
+    /**
+     * Return the menu scene when any key is pressed
+     */
+    private void onKeyPress() {
         gameWindow.startMenu();
     }
 }
