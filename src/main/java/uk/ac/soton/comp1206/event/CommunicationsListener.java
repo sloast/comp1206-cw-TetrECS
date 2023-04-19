@@ -10,5 +10,5 @@ public interface CommunicationsListener {
      *
      * @param communication the message that was received
      */
-    public void receiveCommunication(String communication);
+    void receiveCommunication(String communication);
 }

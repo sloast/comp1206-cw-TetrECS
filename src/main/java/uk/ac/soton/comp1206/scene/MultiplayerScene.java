@@ -21,8 +21,14 @@ import uk.ac.soton.comp1206.game.MultiplayerGame;
 import uk.ac.soton.comp1206.ui.GameWindow;
 import uk.ac.soton.comp1206.utils.Multimedia;
 
+/**
+ * The multiplayer challenge scene
+ */
 public class MultiplayerScene extends ChallengeScene {
 
+    /**
+     * Whether to show opponents' boards
+     */
     static final boolean opponentBoardsEnabled = true;
     private static final Logger logger = LogManager.getLogger(MultiplayerScene.class);
     private static final int NUM_OPPONENT_BOARDS = 5;
@@ -35,12 +41,16 @@ public class MultiplayerScene extends ChallengeScene {
      * Create a new Single Player challenge scene
      *
      * @param gameWindow the Game Window
+     * @param myUsername the username of the player
      */
     public MultiplayerScene(GameWindow gameWindow, String myUsername) {
         super(gameWindow);
         this.myUsername = myUsername;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void setupGame() {
         logger.info("Creating new multiplayer game");
@@ -50,6 +60,9 @@ public class MultiplayerScene extends ChallengeScene {
         disableTimerActions = Game.USE_INTERNAL_TIMER;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void build() {
         // Yes, i copy pasted this from challengescene
@@ -236,11 +249,18 @@ public class MultiplayerScene extends ChallengeScene {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     void startScores() {
         gameWindow.startScores(game.getScore(), leaderboard);
     }
 
+    /**
+     * Sets up opponents' boards at the bottom of the screen. This creates the boards and adds
+     * them to the {@link #opponentBoards} array.
+     */
     private void setupMultiplayerBoards() {
 
         double boardSize = .13;
@@ -269,6 +289,10 @@ public class MultiplayerScene extends ChallengeScene {
         }
     }
 
+    /**
+     * Refreshes the opponents' boards using information stored in the {@link Leaderboard} and
+     * {@link #opponentBoardsMap}
+     */
     private void updateOpponentBoards() {
         String[] topPlayers = leaderboard.getTopPlayers(NUM_OPPONENT_BOARDS);
         for (int i = 0; i < topPlayers.length; i++) {

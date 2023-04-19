@@ -13,10 +13,13 @@ import uk.ac.soton.comp1206.ui.GameWindow;
 import uk.ac.soton.comp1206.utils.Multimedia;
 
 /**
- * The splash screen when first starting up the game.
+ * The splash screen when first starting up or exiting the game.
  */
 public class SplashScene extends BaseScene {
 
+    /**
+     * Whether to show a shorter version of the splash screen
+     */
     private boolean isExiting = false;
 
     /**
@@ -28,16 +31,27 @@ public class SplashScene extends BaseScene {
         super(gameWindow);
     }
 
+    /**
+     * Create a new scene, passing in the GameWindow the scene will be displayed in
+     *
+     * @param gameWindow the game window
+     * @param isExiting  whether to show the exit variant, which is shorter
+     */
     public SplashScene(GameWindow gameWindow, boolean isExiting) {
         super(gameWindow);
         this.isExiting = isExiting;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void initialise() {
-
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void build() {
         root = new GamePane(gameWindow.getWidth(), gameWindow.getHeight());

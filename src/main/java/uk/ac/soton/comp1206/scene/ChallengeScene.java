@@ -48,6 +48,7 @@ import uk.ac.soton.comp1206.component.PieceBoard;
 import uk.ac.soton.comp1206.game.Game;
 import uk.ac.soton.comp1206.ui.GameWindow;
 import uk.ac.soton.comp1206.utils.Colour;
+import uk.ac.soton.comp1206.utils.Colour.TextColour;
 import uk.ac.soton.comp1206.utils.Multimedia;
 import uk.ac.soton.comp1206.utils.Vector2;
 
@@ -204,6 +205,8 @@ public class ChallengeScene extends BaseScene {
 
     /**
      * Handle when the mouse hovers over a block (to highlight it)
+     *
+     * @param gameBlock the Game Block that was hovered over
      */
     protected void blockHoverEnter(GameBlock gameBlock) {
         game.onBlockHoverEnter(gameBlock);
@@ -211,32 +214,43 @@ public class ChallengeScene extends BaseScene {
 
     /**
      * Handle when the mouse exits a block
+     *
+     * @param gameBlock the Game Block that was exited
      */
     protected void blockHoverExit(GameBlock gameBlock) {
         game.onBlockHoverExit(gameBlock);
     }
 
     /**
-     * For when the right mouse button is pressed or e pressed
+     * Rotates the current piece clockwise
+     *
+     * @param ignored ignored
      */
     protected void rotateCurrentPiece(GameBlock ignored) {
         rotateCurrentPiece();
     }
 
+    /**
+     * Rotates the current piece clockwise
+     */
     protected void rotateCurrentPiece() {
         Multimedia.playSound("rotate.wav", 0.5);
         game.rotateCurrentPiece();
     }
 
+    /**
+     * Rotates the current piece counter-clockwise
+     */
     protected void rotateCurrentPieceCounterClockwise() {
         Multimedia.playSound("rotate.wav", 0.5);
         game.rotateCurrentPieceCounterClockwise();
     }
 
     /**
-     * Handle the next piece board being clicked
+     * Swap the current piece with the next piece
      */
-    protected void swapCurrentPiece(GameBlock ignored) {
+    protected void swapPieces() {
+        Multimedia.playSound("swap.wav", 0.5);
         game.swapPieces();
     }
 
@@ -251,6 +265,9 @@ public class ChallengeScene extends BaseScene {
         disableTimerActions = Game.USE_INTERNAL_TIMER;
     }
 
+    /**
+     * Load the high score from the scores.txt file and set the highScore property
+     */
     void loadHighScore() {
         highScore.set(10000);
         try {
@@ -314,8 +331,8 @@ public class ChallengeScene extends BaseScene {
 
         mainPane.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
             if (e.getButton() == MouseButton.SECONDARY) {
-                game.rotateCurrentPiece();
-                //logger.info(Colour.orange("Intercepted right click"));
+                rotateCurrentPiece();
+                logger.debug(Colour.orange("Intercepted right click"));
                 e.consume();
             }
         });
@@ -333,7 +350,7 @@ public class ChallengeScene extends BaseScene {
 
         // Handle PieceBoard being clicked
         currentPieceBoard.setOnAnyBlockClick(this::rotateCurrentPiece);
-        nextPieceBoard.setOnAnyBlockClick(this::swapCurrentPiece);
+        nextPieceBoard.setOnAnyBlockClick(e -> swapPieces());
 
         Multimedia.fadeOutMusic(() -> Multimedia.startMusicIntro("game_start.wav", "game.wav"));
 
@@ -356,7 +373,7 @@ public class ChallengeScene extends BaseScene {
      */
     private void onKeyPress(KeyEvent event) {
         var keyCode = event.getCode();
-        //logger.info("Key pressed: " + keyCode);
+        logger.debug("Key pressed: " + keyCode);
         switch (keyCode) {
             case LEFT, A -> onArrowKeyPressed(Vector2.left());
             case RIGHT, D -> onArrowKeyPressed(Vector2.right());
@@ -364,7 +381,7 @@ public class ChallengeScene extends BaseScene {
             case UP, W -> onArrowKeyPressed(Vector2.up());
             case E, C, CLOSE_BRACKET -> rotateCurrentPiece();
             case Q, Z, OPEN_BRACKET -> rotateCurrentPieceCounterClockwise();
-            case R, SPACE -> game.swapPieces();
+            case R, SPACE -> this.swapPieces();
             case ENTER -> game.keyboardPlayPiece();
             case SHIFT -> timer.speedUp(true);
             case ESCAPE -> {
@@ -379,7 +396,6 @@ public class ChallengeScene extends BaseScene {
      */
     private void testingKeyBinds(KeyEvent event) {
         var keyCode = event.getCode();
-        //logger.info(Colour.orange("Debug key pressed: " + keyCode));
         switch (keyCode) {
             case NUMBER_SIGN -> game.resetBoard();
             case N -> game.nextPiece();
@@ -394,7 +410,7 @@ public class ChallengeScene extends BaseScene {
      */
     private void onLivesChanged(ObservableValue<? extends Number> observableValue, Number oldValue,
             Number newValue) {
-        logger.info(Colour.purple("Lives changed from " + oldValue + " to " + newValue));
+        logger.info(Colour.orange("Lives changed: " + oldValue + " -> " + newValue));
         int max = Game.MAX_LIVES;
         for (int i = 0; i < max; i++) {
             if (i < newValue.intValue()) {
@@ -416,7 +432,7 @@ public class ChallengeScene extends BaseScene {
      */
     private void onMultiplierChanged(ObservableValue<? extends Number> observableValue,
             Number oldValue, Number newValue) {
-        logger.info(Colour.purple("Multiplier changed from " + oldValue + " to " + newValue));
+        logger.info(Colour.green("Multiplier changed: " + oldValue + " -> " + newValue));
         String color = "white";
         double scale = 1D;
         boolean animate = false;
@@ -449,9 +465,13 @@ public class ChallengeScene extends BaseScene {
         animateMultiplier(scale);
 
         if (animate) {
+            Duration startPoint = Duration.millis(500);
+
             if (multiplierTransition != null) {
+                startPoint = multiplierTransition.getCurrentTime();
                 multiplierTransition.stop();
             }
+
             var rotateTransition = new RotateTransition(Duration.millis(1000), multiplierBox);
             rotateTransition.setFromAngle(-15);
             rotateTransition.setToAngle(15);
@@ -467,7 +487,8 @@ public class ChallengeScene extends BaseScene {
             scaleTransition.setAutoReverse(true);
 
             multiplierTransition = new ParallelTransition(rotateTransition, scaleTransition);
-            multiplierTransition.playFrom(Duration.millis(500));
+
+            multiplierTransition.playFrom(startPoint);
 
         } else {
             if (multiplierTransition != null) {
@@ -483,6 +504,11 @@ public class ChallengeScene extends BaseScene {
         }
     }
 
+    /**
+     * Changes the size of the multiplier box
+     *
+     * @param scale the relative size to change to
+     */
     private void animateMultiplier(double scale) {
         double offsetX = -25;
         double offsetY = 0;
@@ -513,7 +539,7 @@ public class ChallengeScene extends BaseScene {
             return;
         }
 
-        logger.info(Colour.cyan("Arrow key pressed: " + direction));
+        logger.debug(Colour.cyan("Arrow key pressed: " + direction));
 
         var pos = new Vector2(game.getCols() / 2, game.getRows() / 2);
         var hoveredBlock = game.hoveredBlock;
@@ -682,6 +708,9 @@ public class ChallengeScene extends BaseScene {
             scaleTransition.playFrom(time);
         }
 
+        /**
+         * Cancels the timer
+         */
         public void stop() {
             scaleTransition.stop();
         }

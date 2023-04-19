@@ -12,14 +12,25 @@ import org.apache.logging.log4j.Logger;
 import uk.ac.soton.comp1206.ui.GameWindow;
 import uk.ac.soton.comp1206.utils.Multimedia;
 
+/**
+ * The settings menu, currently only has volume controls
+ */
 public class SettingsScene extends BaseScene {
 
     private static final Logger logger = LogManager.getLogger(SettingsScene.class);
 
+    /**
+     * Create a new {@link SettingsScene}
+     *
+     * @param gameWindow the game window
+     */
     public SettingsScene(GameWindow gameWindow) {
         super(gameWindow);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void build() {
         logger.info("Building settings scene");
@@ -87,11 +98,19 @@ public class SettingsScene extends BaseScene {
         mainPane.setCenter(settingsGrid);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void initialise() {
         scene.setOnKeyPressed(this::onKeyPress);
     }
 
+    /**
+     * Handle key presses
+     *
+     * @param keyEvent the key event
+     */
     public void onKeyPress(KeyEvent keyEvent) {
         var keyCode = keyEvent.getCode();
         //logger.info("Key pressed: " + keyCode);

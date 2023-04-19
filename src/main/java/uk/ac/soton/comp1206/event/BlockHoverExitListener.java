@@ -13,7 +13,7 @@ public interface BlockHoverExitListener {
      *
      * @param block the block that was clicked
      */
-    public void blockExited(GameBlock block);
+    void blockExited(GameBlock block);
 
 
 }

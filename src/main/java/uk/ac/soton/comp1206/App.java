@@ -20,13 +20,22 @@ import uk.ac.soton.comp1206.utils.Colour;
  */
 public class App extends Application {
 
+    /**
+     * Whether the application should run in debug mode
+     */
     public static final boolean DEBUG_MODE = true;
     private static final Logger logger = LogManager.getLogger(App.class);
+
+    /**
+     * The singleton instance of the app
+     */
     private static App instance;
+
     /**
      * Base resolution width
      */
     private final int width = 800;
+
     /**
      * Base resolution height
      */

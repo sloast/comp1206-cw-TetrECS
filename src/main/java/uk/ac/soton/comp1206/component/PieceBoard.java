@@ -34,15 +34,31 @@ public class PieceBoard extends GameBoard {
         }
     }
 
+    /**
+     * Sets the displayed piece
+     *
+     * @param piece the {@link GamePiece} to display
+     */
     public void setPiece(GamePiece piece) {
         grid.reset();
         grid.playPiece(piece, 1, 1);
     }
 
+    /**
+     * Sets the displayed piece, based on its value and orientation
+     *
+     * @param value    the value of the piece
+     * @param rotations the number of clockwise rotations from the default orientation
+     */
     public void setPiece(int value, int rotations) {
         this.setPiece(GamePiece.createPiece(value, rotations));
     }
 
+    /**
+     * Sets the displayed piece, based on its value, in the default orientation
+     *
+     * @param value the value of the piece
+     */
     public void setPiece(int value) {
         this.setPiece(value, 0);
     }

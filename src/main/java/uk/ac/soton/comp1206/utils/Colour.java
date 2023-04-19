@@ -49,29 +49,22 @@ public class Colour {
 
     /**
      * Adds ANSI colour codes to render a string in the specified colour, and with the specified
-     * rendering mode.
+     * rendering modes.
      *
      * @param message the string to colour
      * @param colour  the colour to use
-     * @param mode    the rendering mode to use
+     * @param modes   the rendering modes to use
      * @return the coloured string
      */
-    public static String colour(String message, TextColour colour, TextMode mode) {
-        return colour.code() + mode.code() + message + "\033[0m";
-    }
-
-    /**
-     * Adds ANSI colour codes to render a string in the specified colour, and with the two specified
-     * rendering modes combined.
-     *
-     * @param message the string to colour
-     * @param colour  the colour to use
-     * @param mode1   the first rendering mode to use
-     * @param mode2   the second rendering mode to use
-     * @return the coloured string
-     */
-    public static String colour(String message, TextColour colour, TextMode mode1, TextMode mode2) {
-        return colour.code() + mode1.code() + mode2.code() + message + "\033[0m";
+    public static String colour(String message, TextColour colour, TextMode... modes) {
+        var sb = new StringBuilder();
+        sb.append(colour.code());
+        for (var mode : modes) {
+            sb.append(mode.code());
+        }
+        sb.append(message);
+        sb.append("\033[0m");
+        return sb.toString();
     }
 
     /**
@@ -236,14 +229,33 @@ public class Colour {
         return mode(message, TextMode.UNDERLINE);
     }
 
+    /**
+     * Shorthand for
+     * {@code Colour.colour(message, TextColour.RED_BG, TextMode.BOLD, TextMode.UNDERLINE)}.
+     *
+     * @param message the message to colour
+     * @return the coloured message
+     */
     public static String fatal(String message) {
         return colour(message, TextColour.RED_BG, TextMode.BOLD, TextMode.UNDERLINE);
     }
 
+    /**
+     * Shorthand for {@code Colour.red(Colour.bold(message))}.
+     *
+     * @param message the message to colour
+     * @return the coloured message
+     */
     public static String error(String message) {
         return red(bold(message));
     }
 
+    /**
+     * Shorthand for {@code Colour.yellow(Colour.bold(message))}.
+     *
+     * @param message the message to colour
+     * @return the coloured message
+     */
     public static String warn(String message) {
         return yellow(bold(message));
     }

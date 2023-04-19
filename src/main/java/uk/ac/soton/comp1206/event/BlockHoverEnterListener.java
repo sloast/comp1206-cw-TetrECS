@@ -13,7 +13,7 @@ public interface BlockHoverEnterListener {
      *
      * @param block the block that was clicked
      */
-    public void blockEntered(GameBlock block);
+    void blockEntered(GameBlock block);
 
 
 }

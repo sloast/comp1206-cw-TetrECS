@@ -8,8 +8,6 @@ import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -35,11 +33,21 @@ import uk.ac.soton.comp1206.utils.Multimedia;
 public class MenuScene extends BaseScene {
 
     private static final Logger logger = LogManager.getLogger(MenuScene.class);
-
     private final BorderPane mainPane = new BorderPane();
-    private final VBox menuBox = new VBox();
+
+    /**
+     * The items in the menu, in order from top to bottom
+     */
     private List<Node> menuItems;
+
+    /**
+     * The number of items in the menu
+     */
     private int menuSize;
+
+    /**
+     * The index of the currently selected menu item
+     */
     private int menuIndex = -1;
 
     /**
@@ -53,7 +61,12 @@ public class MenuScene extends BaseScene {
         gameWindow.getCommunicator().clearListeners();
     }
 
-
+    /**
+     * Create the title image
+     *
+     * @param parent the parent node to add the image to
+     * @return the resulting node
+     */
     private Node makeTitleImg(BorderPane parent) {
         var titleImg = new ImageView(Multimedia.getImage("TetrECS.png"));
         var titleImgContainer = new HBox();
@@ -94,13 +107,15 @@ public class MenuScene extends BaseScene {
 
         var titleImgContainer = makeTitleImg(mainPane);
 
-        //var menuBox = new VBox();
+        var menuBox = new VBox();
         menuBox.setSpacing(0);
         menuBox.setAlignment(Pos.BOTTOM_CENTER);
         //menuBox.getStyleClass().add("menuItem");
         mainPane.setCenter(menuBox);
 
         menuItems = menuBox.getChildren();
+
+        // Create and add the menu items
 
         var startSinglePlayer = new MenuItem("Single Player", this::startGame);
         menuItems.add(startSinglePlayer);
@@ -128,32 +143,52 @@ public class MenuScene extends BaseScene {
         backgroundFade.setToValue(1);
         backgroundFade.play();
 
-        setupTitle(titleImgContainer);
+        // Animate the title
+        animateTitle(titleImgContainer);
 
+        // Animate the menu items
         int startDelay = 500;
-
         for (Node node : menuItems) {
-            animate(node, startDelay);
+            animate(node, Duration.millis(startDelay));
             startDelay += 100;
         }
     }
 
-    public void animate(Node node, int delay, Duration duration) {
+    /**
+     * Animates the given node sliding on from the bottom of the screen
+     *
+     * @param node the node to animate
+     * @param delay the delay before the animation starts
+     * @param duration the duration of the animation
+     */
+    private void animate(Node node, Duration delay, Duration duration) {
         node.setTranslateY(gameWindow.getHeight());
         TranslateTransition slideOn = new TranslateTransition(duration, node);
         slideOn.setFromY(gameWindow.getHeight());
         slideOn.setToY(0);
         slideOn.setInterpolator(Interpolator.LINEAR);
-        slideOn.setDelay(Duration.millis(delay));
+        slideOn.setDelay(delay);
         slideOn.setOnFinished(e -> beep());
         slideOn.play();
     }
 
-    public void animate(Node node, int delay) {
+    /**
+     * Animates the given node sliding on from the bottom of the screen
+     *
+     * @param node the node to animate
+     * @param delay the delay before the animation starts
+     */
+    private void animate(Node node, Duration delay) {
         animate(node, delay, Duration.millis(500));
     }
 
-    public void setupTitle(Node title) {
+    /**
+     * Set up the title animation
+     *
+     * @param title the node to animate
+     */
+    private void animateTitle(Node title) {
+        // Bounce back and forth horizontally
         TranslateTransition moveX = new TranslateTransition(Duration.millis(6400), title);
         moveX.setFromX(-205);
         moveX.setToX(205);
@@ -161,26 +196,50 @@ public class MenuScene extends BaseScene {
         moveX.setCycleCount(Animation.INDEFINITE);
         moveX.setAutoReverse(true);
 
+        // Bounce back and forth vertically
         TranslateTransition moveY = new TranslateTransition(Duration.millis(2700), title);
         moveY.setFromY(95);
         moveY.setToY(-65);
+        // Bounce normally at the top, but smoothly turn at the bottom
         moveY.setInterpolator(Interpolator.EASE_IN);
         moveY.setCycleCount(Animation.INDEFINITE);
         moveY.setAutoReverse(true);
 
-        moveX.play();
-        moveY.play();
-
+        // Fade the title in gradually at the start
         FadeTransition fade = new FadeTransition(Duration.millis(1000), title);
         fade.setFromValue(0);
         fade.setToValue(1);
         fade.setDelay(Duration.millis(1000));
-
         title.setOpacity(0);
 
+        moveX.play();
+        moveY.play();
         fade.play();
     }
 
+    /**
+     * Initialise the menu
+     */
+    @Override
+    public void initialise() {
+
+        // Listen for keypresses
+        scene.setOnKeyPressed(this::onKeyPress);
+
+        // Listen for arrow keys, and handle them before they are consumed by the scene
+        scene.addEventFilter(KeyEvent.KEY_PRESSED, this::onArrowPressed);
+
+        // Start the music if it isn't already playing
+        if (!Multimedia.isPlayingMusic("menu.mp3")) {
+            Multimedia.fadeOutMusic(() -> Multimedia.startMusic("menu.mp3"));
+        }
+    }
+
+    /**
+     * Handle when a key is pressed
+     *
+     * @param keyEvent the key event
+     */
     public void onKeyPress(KeyEvent keyEvent) {
         var keyCode = keyEvent.getCode();
         logger.info("Key pressed: " + keyCode);
@@ -188,15 +247,17 @@ public class MenuScene extends BaseScene {
             exit();
         }
 
-        // For testing
-
+        // Keybinds for testing
         if (!App.DEBUG_MODE) {
             return;
         }
 
         switch (keyCode) {
-            case S -> gameWindow.startScores(7654);
+            // Simulate ending a game with the given score
+            case DIGIT8 -> gameWindow.startScores(7654);
             case DIGIT9 -> gameWindow.startScores(98765);
+
+            // Create a new game and start it
             case M -> {
                 var communicator = gameWindow.getCommunicator();
                 communicator.send("PART");
@@ -222,12 +283,17 @@ public class MenuScene extends BaseScene {
         }
     }
 
-    public void onArrowPress(KeyEvent keyEvent) {
+    /**
+     * Handles arrow key (or WASD) presses for keyboard navigation
+     *
+     * @param keyEvent the key event
+     */
+    private void onArrowPressed(KeyEvent keyEvent) {
         var keyCode = keyEvent.getCode();
         //logger.info("Key pressed: " + keyCode);
         switch (keyCode) {
-            case UP -> selectMenuItem(-1);
-            case DOWN -> selectMenuItem(1);
+            case UP, W -> selectMenuItem(-1);
+            case DOWN, S -> selectMenuItem(1);
             default -> {
                 return;
             }
@@ -236,7 +302,13 @@ public class MenuScene extends BaseScene {
         keyEvent.consume();
     }
 
+    /**
+     * Selects the next menu item in the given direction
+     *
+     * @param direction {@code -1} for up, {@code 1} for down
+     */
     private void selectMenuItem(int direction) {
+        // if nothing is selected, select the first item
         if (menuIndex == -1) {
             menuIndex = 0;
             var selected = menuItems.get(menuIndex);
@@ -247,94 +319,115 @@ public class MenuScene extends BaseScene {
         var selected = menuItems.get(menuIndex);
         ((MenuItem) selected).setSelected(false);
         menuIndex += direction;
+
+        // wrap around the ends of the menu
         if (menuIndex < 0) {
             menuIndex = menuSize - 1;
         } else if (menuIndex >= menuSize) {
             menuIndex = 0;
         }
+
         selected = menuItems.get(menuIndex);
         ((MenuItem) selected).setSelected(true);
     }
 
+    /**
+     * Clears the current menu selection when the mouse hovers over a menu item
+     */
     private void clearSelection() {
+        // if nothing is selected, do nothing
         if (menuIndex == -1) {
             return;
         }
+
+        // deselect the current menu item
         var selected = menuItems.get(menuIndex);
         ((MenuItem) selected).setSelected(false);
 
-        // should it reset back to the top?
-        //menuIndex = -1;
+        // reset the selection
+        menuIndex = -1;
     }
 
+    /**
+     * Plays a beep sound
+     */
     private void beep() {
         Multimedia.playSound("beep.wav", 0.5);
     }
 
     /**
-     * Initialise the menu
+     * Start the single player game
      */
-    @Override
-    public void initialise() {
-        scene.setOnKeyPressed(this::onKeyPress);
-        scene.addEventFilter(KeyEvent.KEY_PRESSED, this::onArrowPress);
-
-        if (!Multimedia.isPlayingMusic("menu.mp3")) {
-            Multimedia.fadeOutMusic(() -> Multimedia.startMusic("menu.mp3"));
-        }
-    }
-
-    /**
-     * Handle when the Start Game button is pressed
-     *
-     * @param event event
-     */
-    private void startGame(ActionEvent event) {
-        beep();
+    private void startGame() {
         gameWindow.startChallenge();
     }
 
-    private void startLobby(ActionEvent event) {
-        beep();
+    /**
+     * Opens the multiplayer lobby
+     */
+    private void startLobby() {
         gameWindow.startLobby();
     }
 
-    private void startScores(ActionEvent event) {
-        beep();
+    /**
+     * Opens the high scores list
+     */
+    private void startScores() {
         gameWindow.startScores();
     }
 
-    private void startInstructions(ActionEvent event) {
-        beep();
+    /**
+     * Opens the instructions screen
+     */
+    private void startInstructions() {
         gameWindow.startInstructions();
     }
 
-    private void startSettings(ActionEvent event) {
-        beep();
+    /**
+     * Opens the settings menu
+     */
+    private void startSettings() {
         gameWindow.startSettings();
     }
 
-    private void exit(ActionEvent event) {
-        exit();
-    }
-
+    /**
+     * Exit the game
+     */
     private void exit() {
-        beep();
         gameWindow.getCommunicator().send("QUIT");
         gameWindow.exitGame();
     }
 
+    /**
+     * Represents a menu item
+     */
     public class MenuItem extends Button {
 
-        public MenuItem(String name, EventHandler<ActionEvent> eventHandler) {
+        /**
+         * Creates a new menu item
+         *
+         * @param name the name of the menu item
+         * @param onAction the action to perform when the menu item is clicked
+         */
+        public MenuItem(String name, Runnable onAction) {
             super(name);
             getStyleClass().add("menuItem");
-            setOnAction(eventHandler);
+
+            // Call onAction when clicked
+            setOnAction(e -> {
+                beep();
+                onAction.run();
+            });
 
             //clear keyboard selection when hovered
             setOnMouseEntered(e -> MenuScene.this.clearSelection());
         }
 
+        /**
+         * Sets whether this menu item is selected
+         *
+         * @param focused true if selected
+         */
         public void setSelected(boolean focused) {
             if (focused) {
                 getStyleClass().add("selected");
