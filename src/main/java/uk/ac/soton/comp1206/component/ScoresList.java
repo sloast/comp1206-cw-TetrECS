@@ -16,6 +16,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -97,6 +98,7 @@ public class ScoresList extends GridPane {
         ColumnConstraints usernameColumn = new ColumnConstraints();
         usernameColumn.setHalignment(HPos.RIGHT);
         //usernameColumn.setPercentWidth(50);
+        usernameColumn.setHgrow(Priority.ALWAYS);
         ColumnConstraints separatorColumn = new ColumnConstraints();
 
         ColumnConstraints scoreColumn = new ColumnConstraints();

@@ -160,6 +160,8 @@ public class Game {
         logger.info(Colour.colour("Game over!", TextColour.PURPLE, TextMode.BOLD));
 
         stop();
+
+        gameOverListener.onGameOver();
     }
 
     /**
@@ -175,8 +177,6 @@ public class Game {
         if (timer != null) {
             timer.cancel();
         }
-
-        gameOverListener.onGameOver();
     }
 
     /**

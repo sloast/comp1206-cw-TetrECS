@@ -72,40 +72,8 @@ public class App extends Application {
         instance = this;
         this.stage = stage;
 
-        //eula();
-
         //Open game window
         openGame();
-    }
-
-    /**
-     * This is just me being silly :)
-     */
-    private void eula() {
-        try {
-            String content = Files.readString(Path.of(
-                    Objects.requireNonNull(App.class.getResource("/misc/eula.txt")).getPath()
-                            .substring(1)));
-            var alert = new Alert(AlertType.WARNING);
-            alert.getButtonTypes().clear();
-            alert.getButtonTypes().add(new ButtonType("I agree", ButtonData.OK_DONE));
-            alert.getButtonTypes().add(new ButtonType("Cancel", ButtonData.CANCEL_CLOSE));
-
-            alert.setTitle("TetrECS License Agreement");
-            alert.setHeaderText("Please agree to the license terms before continuing");
-            var area = new TextArea(content);
-            area.setWrapText(true);
-            area.setEditable(false);
-            alert.getDialogPane().setContent(area);
-            alert.showAndWait();
-            if (alert.getResult().getText().equals("Cancel")) {
-                logger.info(Colour.error("bye.."));
-                System.exit(0);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-            //logger.error(Colour.error("Could not read EULA :("));
-        }
     }
 
     /**

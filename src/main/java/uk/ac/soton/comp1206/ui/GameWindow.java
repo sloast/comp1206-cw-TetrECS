@@ -172,7 +172,7 @@ public class GameWindow {
      * width and height.
      */
     public void setupStage() {
-        stage.setTitle("TetrECS");
+        stage.setTitle("SUPER TETRECS 64");
         stage.setMinWidth(width);
         stage.setMinHeight(height + 20);
         stage.setOnCloseRequest(ev -> App.getInstance().shutdown());
@@ -198,7 +198,7 @@ public class GameWindow {
     }
 
     /**
-     * Setup the default scene (an empty black scene) when no scene is loaded
+     * Set up the default scene (an empty black scene) when no scene is loaded
      */
     public void setupDefaultScene() {
         this.scene = new Scene(new Pane(), width, height, Color.BLACK);

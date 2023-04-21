@@ -1,6 +1,7 @@
 package uk.ac.soton.comp1206.scene;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
@@ -49,12 +50,25 @@ import uk.ac.soton.comp1206.utils.Vector2;
 public class ChallengeScene extends BaseScene {
 
     private static final Logger logger = LogManager.getLogger(ChallengeScene.class);
-    public static boolean disableTimerActions = false;
+    static boolean disableTimerActions = false;
+    /**
+     * The current score that is shown on the UI. Used for animating the score
+     */
     final IntegerProperty displayedScore = new SimpleIntegerProperty(0);
     final IntegerProperty highScore = new SimpleIntegerProperty(0);
-    public PieceBoard currentPieceBoard;
-    public PieceBoard nextPieceBoard;
-    public BorderPane mainPane;
+    /**
+     * The {@link PieceBoard} containing the current piece
+     */
+    protected PieceBoard currentPieceBoard;
+    /**
+     * The {@link PieceBoard} containing the next piece
+     */
+    protected PieceBoard nextPieceBoard;
+    /**
+     * The main pane of the scene
+     */
+    protected BorderPane mainPane;
+
     Game game;
     GameBoard board;
     VBox livesContainer;
@@ -255,6 +269,18 @@ public class ChallengeScene extends BaseScene {
         disableTimerActions = Game.USE_INTERNAL_TIMER;
     }
 
+    /**
+     * Exit the game and return to the main menu
+     */
+    protected void exit() {
+        game.stop();
+        cleanupScene();
+        gameWindow.startMenu();
+    }
+
+    /**
+     * Reset the timer
+     */
     protected void onGameLoop() {
         Duration timerDelay = game.getTimerDelay();
         timer.reset(timerDelay);
@@ -269,7 +295,13 @@ public class ChallengeScene extends BaseScene {
             String line = reader.readLine();
             highScore.set(Integer.parseInt(line.split(":")[1].trim()));
         } catch (Exception e) {
-            logger.error(Colour.error("Error reading high score: " + e));
+            if (e instanceof FileNotFoundException) {
+                logger.warn(Colour.error("No scores file found"));
+                logger.warn(Colour.warn("Scores file will be created at the end of this game"));
+            } else {
+                logger.error(Colour.error("Error reading high score file" + e));
+            }
+
             highScore.set(10000);
         }
     }
@@ -366,17 +398,15 @@ public class ChallengeScene extends BaseScene {
             case RIGHT, D -> onArrowKeyPressed(Vector2.right());
             case DOWN, S -> onArrowKeyPressed(Vector2.down());
             case UP, W -> onArrowKeyPressed(Vector2.up());
-            case E, C, CLOSE_BRACKET -> rotateCurrentPiece();
-            case Q, Z, OPEN_BRACKET -> rotateCurrentPieceCounterClockwise();
+            case E, C, CLOSE_BRACKET -> this.rotateCurrentPiece();
+            case Q, Z, OPEN_BRACKET -> this.rotateCurrentPieceCounterClockwise();
             case R, SPACE -> this.swapPieces();
             case ENTER, X -> game.keyboardPlayPiece();
+            case ESCAPE -> this.exit();
             case SHIFT -> timer.speedUp(true);
-            case ESCAPE -> {
-                game.stop();
-                gameWindow.startMenu();
-            }
         }
     }
+
 
     /**
      * Handles keybinds used for testing
@@ -544,14 +574,18 @@ public class ChallengeScene extends BaseScene {
         game.hoverBlockKeyboard(hoveredBlock);
     }
 
+    private void cleanupScene() {
+        timer.animation.stop();
+    }
+
     /**
      * Called when the game ends
      */
     private void gameOver() {
         logger.info(Colour.red("Game Over"));
+
         Multimedia.queueMusic("end.wav", 1);
-        timer.animation.stop();
-        //gameWindow.startMenu();
+        cleanupScene();
         startScores();
     }
 
@@ -615,7 +649,7 @@ public class ChallengeScene extends BaseScene {
                     new KeyFrame(delay.multiply(0.75),
                             new KeyValue(this.fillProperty(), Color.YELLOW)
                     ),
-                    new KeyFrame(delay.multiply(0.9),
+                    new KeyFrame(delay.multiply(0.85),
                             new KeyValue(this.fillProperty(), Color.ORANGE)
                     ),
                     new KeyFrame(delay,
