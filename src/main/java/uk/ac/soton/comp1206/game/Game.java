@@ -7,6 +7,7 @@ import java.util.Queue;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.util.Duration;
@@ -30,13 +31,15 @@ import uk.ac.soton.comp1206.utils.Vector2;
  */
 public class Game {
 
+    // Using the internal timer keeps the logic more separated from the UI, but the speedup button
+    // is less reliable using this method.
+    // When true, the timer is handled by the ChallengeScene instead
     /**
-     * Whether to use the internal timer or not. If false, the game will use the timer from the UI
+     * Whether to use the internal timer or not. If false, the game will use the timer from the UI.
+     * It is recommended to leave this as false.
      */
     public static final boolean USE_INTERNAL_TIMER = false;
 
-    // Using the internal timer keeps the logic more separated from the UI
-    // but the speedup button doesn't work properly, so it is currently disabled
     /**
      * The number of lives the player starts with
      */
@@ -94,7 +97,7 @@ public class Game {
     private Timer timer;
     private double startTime;
     private boolean timerFast = false;
-
+    private double currentTimerDelay;
 
     /**
      * Create a new game with the specified rows and columns. Creates a corresponding grid model.
@@ -189,7 +192,7 @@ public class Game {
      * Resets the timer
      */
     private void resetTimer() {
-        gameLoopListener.onGameLoop(getTimerDelayMillis());
+        gameLoopListener.onGameLoop();
 
         // Reset internal timer
         if (USE_INTERNAL_TIMER) {
@@ -202,16 +205,18 @@ public class Game {
             var task = getTimerTask();
 
             timer.schedule(task, getTimerDelayMillis());
+
             startTime = System.currentTimeMillis();
+            currentTimerDelay = getTimerDelayMillis();
         }
 
     }
 
-    private TimerTask getTimerTask() {
+    protected TimerTask getTimerTask() {
         return new TimerTask() {
             @Override
             public void run() {
-                loseLife();
+                Platform.runLater(Game.this::loseLife);
             }
         };
     }
@@ -221,14 +226,18 @@ public class Game {
      *
      * @param fast if {@code true}, the timer will be sped up by 4x
      */
-    public void setTimerSpeed(boolean fast) {
+    public void setTimerSpeedUp(boolean fast) {
 
         if (fast != timerFast) {
             if (timer == null) {
                 return;
             }
-            double remainingTime = getTimerDelayMillis() - (System.currentTimeMillis() - startTime);
+            double currentTime = System.currentTimeMillis();
+            double elapsed = currentTime - startTime;
+            double remainingTime = currentTimerDelay - elapsed;
             remainingTime *= fast ? 0.25 : 4;
+            currentTimerDelay = remainingTime;
+            startTime = currentTime;
             timer.cancel();
             timer = new Timer();
             timer.schedule(getTimerTask(), (long) remainingTime);
@@ -492,7 +501,8 @@ public class Game {
         currentPiece = nextPiece;
         nextPiece = GamePiece.createPiece(pieceQueue.remove(), random.nextInt(4));
 
-        logger.info("Getting next piece: " + (currentPiece == null ? "null" : currentPiece.getValue()));
+        logger.info(
+                "Getting next piece: " + (currentPiece == null ? "null" : currentPiece.getValue()));
 
         if (currentPiece == null || nextPiece.getValue() == currentPiece.getValue()) {
             nextPiece();

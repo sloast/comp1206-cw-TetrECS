@@ -109,7 +109,7 @@ public class LobbyScene extends BaseScene {
         channelListContainer.getChildren().add(channelList);
 
         Label loading = new Label("Loading channels...");
-        loading.getStyleClass().add("heading");
+        loading.getStyleClass().add("subheading");
         channelList.getChildren().add(loading);
 
         // Text field for creating a new channel

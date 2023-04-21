@@ -17,7 +17,7 @@ public class PieceBoard extends GameBoard {
      * @param height the visual height
      */
     public PieceBoard(double width, double height) {
-        this(width, height, false);
+        this(width, height, true);
     }
 
     /**
@@ -29,7 +29,7 @@ public class PieceBoard extends GameBoard {
      */
     public PieceBoard(double width, double height, boolean showPivot) {
         super(new Grid(3, 3), width, height);
-        if (!showPivot) {
+        if (showPivot) {
             getBlock(1, 1).setPivot();
         }
     }

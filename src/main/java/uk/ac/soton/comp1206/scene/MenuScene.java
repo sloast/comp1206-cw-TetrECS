@@ -11,6 +11,7 @@ import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -19,6 +20,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -226,9 +228,6 @@ public class MenuScene extends BaseScene {
         // Listen for keypresses
         scene.setOnKeyPressed(this::onKeyPress);
 
-        // Listen for arrow keys, and handle them before they are consumed by the scene
-        scene.addEventFilter(KeyEvent.KEY_PRESSED, this::onArrowPressed);
-
         // Start the music if it isn't already playing
         if (!Multimedia.isPlayingMusic("menu.mp3")) {
             Multimedia.fadeOutMusic(() -> Multimedia.startMusic("menu.mp3"));
@@ -280,6 +279,8 @@ public class MenuScene extends BaseScene {
                 });
             }
             case L -> gameWindow.startLobby();
+
+            default -> this.onArrowPressed(keyEvent);
         }
     }
 
@@ -290,7 +291,7 @@ public class MenuScene extends BaseScene {
      */
     private void onArrowPressed(KeyEvent keyEvent) {
         var keyCode = keyEvent.getCode();
-        //logger.info("Key pressed: " + keyCode);
+        logger.debug("Key pressed: " + keyCode);
         switch (keyCode) {
             case UP, W -> selectMenuItem(-1);
             case DOWN, S -> selectMenuItem(1);
@@ -352,7 +353,7 @@ public class MenuScene extends BaseScene {
      * Plays a beep sound
      */
     private void beep() {
-        Multimedia.playSound("beep.wav", 0.5);
+        Multimedia.playSound("beep.wav", 0.8);
     }
 
     /**
@@ -421,6 +422,8 @@ public class MenuScene extends BaseScene {
 
             //clear keyboard selection when hovered
             setOnMouseEntered(e -> MenuScene.this.clearSelection());
+
+            this.setOnKeyPressed(MenuScene.this::onArrowPressed);
         }
 
         /**

@@ -32,7 +32,7 @@ public class GameWindow {
 
     private static final Logger logger = LogManager.getLogger(GameWindow.class);
 
-    private static final boolean SHOW_SPLASH_SCREEN = false;
+    private static final boolean SHOW_SPLASH_SCREEN = true;
     private static final boolean SHOW_EXIT_SPLASH = true;
     final Communicator communicator;
     private final int width;

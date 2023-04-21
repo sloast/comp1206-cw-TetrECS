@@ -7,8 +7,6 @@ public interface GameLoopListener {
 
     /**
      * Handle a game loop event
-     *
-     * @param delay the duration of the next timer
      */
-    void onGameLoop(double delay);
+    void onGameLoop();
 }

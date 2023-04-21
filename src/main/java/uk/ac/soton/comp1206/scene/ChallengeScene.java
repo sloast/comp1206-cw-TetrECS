@@ -2,15 +2,7 @@ package uk.ac.soton.comp1206.scene;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import javafx.animation.Animation;
-import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.ParallelTransition;
@@ -19,7 +11,6 @@ import javafx.animation.ScaleTransition;
 import javafx.animation.Timeline;
 import javafx.animation.Transition;
 import javafx.animation.TranslateTransition;
-import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -48,7 +39,6 @@ import uk.ac.soton.comp1206.component.PieceBoard;
 import uk.ac.soton.comp1206.game.Game;
 import uk.ac.soton.comp1206.ui.GameWindow;
 import uk.ac.soton.comp1206.utils.Colour;
-import uk.ac.soton.comp1206.utils.Colour.TextColour;
 import uk.ac.soton.comp1206.utils.Multimedia;
 import uk.ac.soton.comp1206.utils.Vector2;
 
@@ -265,31 +255,22 @@ public class ChallengeScene extends BaseScene {
         disableTimerActions = Game.USE_INTERNAL_TIMER;
     }
 
+    protected void onGameLoop() {
+        Duration timerDelay = game.getTimerDelay();
+        timer.reset(timerDelay);
+    }
+
     /**
      * Load the high score from the scores.txt file and set the highScore property
      */
     void loadHighScore() {
-        highScore.set(10000);
         try {
             BufferedReader reader = new BufferedReader(new FileReader("scores.txt"));
             String line = reader.readLine();
             highScore.set(Integer.parseInt(line.split(":")[1].trim()));
         } catch (Exception e) {
             logger.error(Colour.error("Error reading high score: " + e));
-            logger.info(Colour.cyan("Creating template scores file..."));
-
-            try {
-                Path defaultScoreFile = Path.of(Objects.requireNonNull(
-                        ChallengeScene.class.getResource("/misc/default-scores.txt")).toURI());
-                List<String> defaultScores = Files.readAllLines(defaultScoreFile);
-
-                Files.write(Path.of("scores.txt"), defaultScores);
-
-                logger.info(Colour.cyan("Template scores file created"));
-
-            } catch (Exception ex) {
-                logger.error(Colour.error("Error creating template scores file: " + ex));
-            }
+            highScore.set(10000);
         }
     }
 
@@ -307,7 +288,7 @@ public class ChallengeScene extends BaseScene {
             this.nextPieceBoard.setPiece(followingPiece);
         });
         game.setOnGameOver(this::gameOver);
-        game.setOnGameLoop(this.timer::reset);
+        game.setOnGameLoop(this::onGameLoop);
 
         // Play sound on new level
         game.level.addListener((observable, oldValue, newValue) -> {
@@ -326,6 +307,12 @@ public class ChallengeScene extends BaseScene {
                     highScore.bind(displayedScore);
                     ChallengeScene.this.displayedScore.removeListener(this);
                 }
+            }
+        });
+
+        this.displayedScore.addListener((observable, oldValue, newValue) -> {
+            if (newValue.intValue() > highScore.get()) {
+                highScore.bind(displayedScore);
             }
         });
 
@@ -382,7 +369,7 @@ public class ChallengeScene extends BaseScene {
             case E, C, CLOSE_BRACKET -> rotateCurrentPiece();
             case Q, Z, OPEN_BRACKET -> rotateCurrentPieceCounterClockwise();
             case R, SPACE -> this.swapPieces();
-            case ENTER -> game.keyboardPlayPiece();
+            case ENTER, X -> game.keyboardPlayPiece();
             case SHIFT -> timer.speedUp(true);
             case ESCAPE -> {
                 game.stop();
@@ -563,7 +550,7 @@ public class ChallengeScene extends BaseScene {
     private void gameOver() {
         logger.info(Colour.red("Game Over"));
         Multimedia.queueMusic("end.wav", 1);
-        timer.scaleTransition.stop();
+        timer.animation.stop();
         //gameWindow.startMenu();
         startScores();
     }
@@ -591,11 +578,9 @@ public class ChallengeScene extends BaseScene {
     /**
      * The Timer at the bottom of the screen
      */
-    public class GameTimer extends Rectangle {
+    class GameTimer extends Rectangle {
 
-        private ScaleTransition scaleTransition;
-        private int colorStage = 2;
-        private Timeline colorAnimation;
+        private Animation animation;
 
         /**
          * Create a new GameTimer
@@ -611,108 +596,60 @@ public class ChallengeScene extends BaseScene {
         /**
          * Reset the timer bar to the start
          *
-         * @param ms the duration of the animation, in milliseconds
+         * @param delay the duration of the animation
          */
-        public void reset(double ms) {
-            //timer = new Rectangle(0, 0, 700, 40);
-            if (colorAnimation != null) {
-                colorAnimation.stop();
+        public void reset(Duration delay) {
+
+            if (animation != null) {
+                animation.stop();
             }
 
-            // Reset the color. Is delayed to allow the previous animation to fully stop first
-            Platform.runLater(() -> {
-                this.setFill(Color.GREEN);
-                this.setScaleX(1);
-            });
-            this.setFill(Color.GREEN);
-            colorStage = 2;
-
-            // Resets the scaleTransition if it exists
-            if (scaleTransition != null) {
-                scaleTransition.stop();
-                this.setFill(Color.GREEN);
-                scaleTransition.setDuration(Duration.millis(ms));
-                scaleTransition.play();
-                return;
-            }
-
-            scaleTransition = new ScaleTransition(Duration.millis(ms), this);
-
-            scaleTransition.setFromX(1);
-            scaleTransition.setToX(0);
-            scaleTransition.setInterpolator(Interpolator.LINEAR);
+            animation = new Timeline(
+                    new KeyFrame(Duration.ZERO,
+                            new KeyValue(this.scaleXProperty(), 1),
+                            new KeyValue(this.fillProperty(), Color.GREEN)
+                    ),
+                    new KeyFrame(delay.multiply(0.25),
+                            new KeyValue(this.fillProperty(), Color.GREEN)
+                    ),
+                    new KeyFrame(delay.multiply(0.75),
+                            new KeyValue(this.fillProperty(), Color.YELLOW)
+                    ),
+                    new KeyFrame(delay.multiply(0.9),
+                            new KeyValue(this.fillProperty(), Color.ORANGE)
+                    ),
+                    new KeyFrame(delay,
+                            new KeyValue(this.scaleXProperty(), 0),
+                            new KeyValue(this.fillProperty(), Color.RED)
+                    )
+            );
 
             if (!disableTimerActions) {
-                scaleTransition.setOnFinished(e -> game.loseLife());
+                animation.setOnFinished(e -> game.loseLife());
             }
 
-            scaleTransition.play();
-
-            // May not be the best way to do this, but it works with the speedup button.
-            // Checks 10 times per second if the color should be changed.
-            ScheduledExecutorService checkColor = Executors.newSingleThreadScheduledExecutor();
-            checkColor.scheduleAtFixedRate(() -> {
-                if (colorStage == 2 && getProportionComplete() > 0.5) {
-                    animateColour(Color.YELLOW);
-                    colorStage = 1;
-                } else if (colorStage == 1 && getProportionComplete() > 0.75) {
-                    animateColour(Color.RED);
-                    colorStage = 0;
-                }
-            }, 100, 100, TimeUnit.MILLISECONDS);
+            animation.play();
         }
 
         /**
-         * Create and start a new transition from the current colour to {@code endColor}
-         * <br>Stops any previous color transition
-         */
-        private void animateColour(Color endColor) {
-            if (colorAnimation != null) {
-                colorAnimation.stop();
-            }
-            colorAnimation = new Timeline(
-                    new KeyFrame(Duration.millis(scaleTransition.getDuration().toMillis() / 5),
-                            new KeyValue(this.fillProperty(), endColor)));
-            colorAnimation.play();
-        }
-
-        /**
-         * Returns the proportion of the animation that has elapsed, from 0 to 1
-         */
-        private double getProportionComplete() {
-            var time = scaleTransition.getCurrentTime();
-            var duration = scaleTransition.getDuration();
-            return time.toMillis() / duration.toMillis();
-        }
-
-
-        /**
-         * Speed up the timer by 4x
+         * Speed up the timer by 4x when {@code active} is {@code true}, and resets it to 1x when
+         * {@code false}
+         *
+         * @param active whether to speed up the timer
          */
         public void speedUp(boolean active) {
-            // This feature makes everything else in the timer more complicated
+            animation.setRate(active ? 4 : 1);
 
-            game.setTimerSpeed(active);
-            var time = scaleTransition.getCurrentTime();
-            var duration = scaleTransition.getDuration();
-            var atNormalSpeed = duration.equals(game.getTimerDelay());
-            if (active && atNormalSpeed) {
-                time = time.multiply(0.25);
-                duration = duration.multiply(0.25);
-            } else if (!active && !atNormalSpeed) {
-                duration = game.getTimerDelay();
-                time = time.multiply(4);
+            if (disableTimerActions) {
+                game.setTimerSpeedUp(active);
             }
-            scaleTransition.stop();
-            scaleTransition.setDuration(duration);
-            scaleTransition.playFrom(time);
         }
 
         /**
          * Cancels the timer
          */
         public void stop() {
-            scaleTransition.stop();
+            animation.stop();
         }
     }
 }

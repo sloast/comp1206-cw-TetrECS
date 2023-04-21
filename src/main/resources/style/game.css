@@ -68,9 +68,12 @@ Label {
 
   -fx-font-size: 20px;
   -fx-font-weight: 700;
-  -fx-border-color: black;
-  -fx-stroke: black;
-  -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
+}
+
+.subheading {
+  -fx-text-fill: white;
+
+  -fx-font-size: 16px;
 }
 
 .score {
@@ -272,6 +275,10 @@ Button .disabled {
   -fx-background-color: none;
   -fx-effect: dropshadow(gaussian, black, 1, 1.0, 1, 1);
 }
+
+/*.menuItem:focused {
+  -fx-text-fill: #7dd50b;
+}*/
 
 .menuItem:hover {
   -fx-text-fill: green;

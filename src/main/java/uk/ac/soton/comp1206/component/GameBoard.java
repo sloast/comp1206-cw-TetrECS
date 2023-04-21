@@ -126,7 +126,7 @@ public class GameBoard extends GridPane {
         setMaxWidth(width);
         setMaxHeight(height);
 
-        setGridLinesVisible(true);
+        setGridLinesVisible(false);
 
         blocks = new GameBlock[cols][rows];
 

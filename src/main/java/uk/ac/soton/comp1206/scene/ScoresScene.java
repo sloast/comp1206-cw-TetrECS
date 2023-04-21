@@ -4,6 +4,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -210,12 +211,14 @@ public class ScoresScene extends BaseScene {
      */
     private HiScoresList loadScores() {
         try {
-            var scores = Files.lines(scoresPath).toList();
-            if (scores.isEmpty()) {
-                return new HiScoresList();
-            } else {
-                return new HiScoresList(scores);
+
+            if (!Files.exists(scoresPath)) {
+                createDefaultScoresFile();
             }
+
+            List<String> scores = Files.readAllLines(scoresPath);
+
+            return new HiScoresList(scores);
         } catch (Exception e) {
             logger.error(Colour.red("Error reading scores file"));
             //check if file exists, create it if it doesn't
@@ -228,6 +231,21 @@ public class ScoresScene extends BaseScene {
             }
 
             return new HiScoresList();
+        }
+    }
+
+    private void createDefaultScoresFile() {
+        try {
+            Path defaultScoreFile = Path.of(Objects.requireNonNull(
+                    ChallengeScene.class.getResource("/misc/default-scores.txt")).toURI());
+
+            List<String> defaultScores = Files.readAllLines(defaultScoreFile);
+            Files.write(Path.of("scores.txt"), defaultScores);
+
+            logger.info(Colour.cyan("Template scores file created"));
+
+        } catch (Exception ex) {
+            logger.error(Colour.error("Error creating template scores file: " + ex));
         }
     }
 

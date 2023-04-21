@@ -64,7 +64,7 @@ public class InstructionsScene extends BaseScene {
         var boardSize = 60;
 
         for (int i = 0; i < GamePiece.PIECES; i++) {
-            var board = new PieceBoard(boardSize, boardSize);
+            var board = new PieceBoard(boardSize, boardSize, false);
             board.setPiece(i);
             pieceGrid.add(board, i % numColumns, i / numColumns);
         }
