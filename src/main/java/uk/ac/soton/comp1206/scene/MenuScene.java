@@ -70,7 +70,7 @@ public class MenuScene extends BaseScene {
      * @return the resulting node
      */
     private Node makeTitleImg(BorderPane parent) {
-        var titleImg = new ImageView(Multimedia.getImage("TetrECS.png"));
+        var titleImg = new ImageView(Multimedia.getImage("tetrecs.png"));
         var titleImgContainer = new HBox();
         titleImg.setFitWidth(400);
         titleImg.setPreserveRatio(true);

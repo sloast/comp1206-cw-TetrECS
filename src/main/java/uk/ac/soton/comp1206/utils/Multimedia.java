@@ -294,9 +294,8 @@ public class Multimedia {
      * @param size     the size of the image, in pixels. Use this to force the image to load at a
      *                 specific resolution
      * @return the {@link Image}
-     * @throws NullPointerException if the file is not found
      */
-    public static Image getImage(String filename, int size) throws NullPointerException {
+    public static Image getImage(String filename, int size) {
         return getImage(filename, size, size);
     }
 
@@ -308,12 +307,16 @@ public class Multimedia {
      *                 specific resolution
      * @param height   the height of the image, in pixels
      * @return the {@link Image}
-     * @throws NullPointerException if the file is not found
      */
-    public static Image getImage(String filename, int width, int height)
-            throws NullPointerException {
-        return new Image(Objects.requireNonNull(Multimedia.class.getResource(IMAGE_PATH + filename))
-                .toExternalForm(), width, height, true, false);
+    public static Image getImage(String filename, int width, int height) {
+        try {
+            return new Image(
+                    Objects.requireNonNull(Multimedia.class.getResource(IMAGE_PATH + filename))
+                            .toExternalForm(), width, height, true, false);
+        } catch (NullPointerException e) {
+            logger.error("Could not find image: " + filename);
+            return null;
+        }
     }
 
     /**
@@ -321,11 +324,16 @@ public class Multimedia {
      *
      * @param filename the name of the file to get
      * @return the {@link Image}
-     * @throws NullPointerException if the file is not found
      */
-    public static Image getImage(String filename) throws NullPointerException {
-        return new Image(Objects.requireNonNull(Multimedia.class.getResource(IMAGE_PATH + filename))
-                .toExternalForm());
+    public static Image getImage(String filename) {
+        try {
+            return new Image(
+                    Objects.requireNonNull(Multimedia.class.getResource(IMAGE_PATH + filename))
+                            .toExternalForm());
+        } catch (NullPointerException e) {
+            logger.error("Could not find image: " + filename);
+            return null;
+        }
     }
 
 }

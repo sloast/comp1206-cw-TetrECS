@@ -1,10 +1,11 @@
 package uk.ac.soton.comp1206.scene;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -234,12 +235,16 @@ public class ScoresScene extends BaseScene {
         }
     }
 
+    /**
+     * Creates a scores.txt file with some default scores
+     */
     private void createDefaultScoresFile() {
         try {
-            Path defaultScoreFile = Path.of(Objects.requireNonNull(
-                    ChallengeScene.class.getResource("/misc/default-scores.txt")).toURI());
 
-            List<String> defaultScores = Files.readAllLines(defaultScoreFile);
+            var in = getClass().getResourceAsStream("/misc/default-scores.txt");
+            List<String> defaultScores = new BufferedReader(
+                    new InputStreamReader(in)).lines().toList();
+
             Files.write(Path.of("scores.txt"), defaultScores);
 
             logger.info(Colour.cyan("Template scores file created"));
